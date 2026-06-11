@@ -1,0 +1,1585 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kilometer Bog</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    :root {
+      --coffee-dark:   #3b2a1a;
+      --coffee-mid:    #6b4c35;
+      --coffee-latte:  #a07850;
+      --coffee-cream:  #d4b896;
+      --bg:            #f5ede3;
+      --bg-card:       #fdf8f3;
+      --border:        #e8d8c8;
+      --text:          #2c1f14;
+      --text-muted:    #8a6f5a;
+    }
+
+    body {
+      background: var(--bg);
+      font-family: 'Segoe UI', sans-serif;
+      color: var(--text);
+    }
+
+    /* Navbar */
+    .navbar { background: var(--coffee-dark) !important; }
+    .navbar-brand { font-weight: 700; letter-spacing: .5px; color: #fff !important; }
+
+    /* Cards */
+    .card {
+      border: 1px solid var(--border);
+      box-shadow: 0 2px 8px rgba(59,42,26,.08);
+      border-radius: 14px;
+      background: var(--bg-card);
+    }
+
+    /* Tabs */
+    .nav-tabs { border-bottom: 2px solid var(--border); }
+    .nav-tabs .nav-link {
+      color: var(--text-muted);
+      border: none;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      font-weight: 500;
+    }
+    .nav-tabs .nav-link:hover { color: var(--coffee-mid); background: transparent; }
+    .nav-tabs .nav-link.active {
+      color: var(--coffee-dark);
+      background: transparent;
+      border-bottom: 2px solid var(--coffee-mid);
+      font-weight: 600;
+    }
+
+    /* Buttons */
+    .btn-primary {
+      background: var(--coffee-mid);
+      border-color: var(--coffee-mid);
+      color: #fff;
+    }
+    .btn-primary:hover, .btn-primary:focus {
+      background: var(--coffee-dark);
+      border-color: var(--coffee-dark);
+    }
+    .btn-warning {
+      background: var(--coffee-latte);
+      border-color: var(--coffee-latte);
+      color: #fff;
+    }
+    .btn-warning:hover { background: var(--coffee-mid); border-color: var(--coffee-mid); color: #fff; }
+    .btn-light { background: #f5ede3; border-color: var(--border); color: var(--coffee-dark); }
+    .btn-light:hover { background: var(--border); }
+    .btn-outline-secondary {
+      border-color: var(--border);
+      color: var(--text-muted);
+    }
+    .btn-outline-secondary:hover { background: var(--border); color: var(--text); border-color: var(--border); }
+    .btn-success { background: #6b8c5a; border-color: #6b8c5a; }
+    .btn-success:hover { background: #557044; border-color: #557044; }
+
+    /* Badges */
+    .badge-pending  { background: #c9a050; color: #fff; }
+    .badge-done     { background: #6b8c5a; color: #fff; }
+    .badge-error    { background: #b85c4a; color: #fff; }
+
+    /* Table */
+    #trips-table td, #trips-table th { vertical-align: middle; font-size: .88rem; }
+    .table-light { background: #f0e5d8 !important; }
+    .table-hover tbody tr:hover { background: #f5ede3; }
+    .table > :not(caption) > * > * { border-color: var(--border); }
+    .dist-cell { font-weight: 600; color: var(--coffee-mid); }
+
+    /* Summary bar */
+    .total-bar {
+      background: var(--coffee-dark);
+      color: #f5ede3;
+      border-radius: 12px;
+      padding: .85rem 1.4rem;
+    }
+
+    /* Section title */
+    .section-title {
+      font-size: .68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: var(--coffee-latte);
+      margin-bottom: .5rem;
+    }
+
+    /* Form controls */
+    .form-control, .form-select {
+      border-color: var(--border);
+      background: #fff;
+    }
+    .form-control:focus, .form-select:focus {
+      border-color: var(--coffee-latte);
+      box-shadow: 0 0 0 .2rem rgba(160,120,80,.2);
+    }
+    .form-text { color: var(--text-muted); }
+    .bg-light { background: #f0e5d8 !important; }
+
+    /* Alerts */
+    .alert-warning { background: #f5e6cc; border-color: #e0c090; color: #6b4c20; }
+    .alert-info    { background: #e8f0f5; border-color: #c0d4e0; color: #2a4a5a; }
+    .alert-success { background: #e8f0e0; border-color: #b8d0a0; color: #3a5a28; }
+    .alert-danger  { background: #f5e0dc; border-color: #e0b0a8; color: #6a2820; }
+
+    /* Misc */
+    .spinner-sm { width:1rem; height:1rem; }
+    .trello-card-row td { font-size: .85rem; }
+    .tab-content { padding-top: 1.5rem; }
+    textarea.bulk-input { font-family: monospace; font-size: .85rem; }
+    .trello-step { display: none; }
+    .trello-step.active { display: block; }
+    code { color: var(--coffee-mid); background: #f0e5d8; padding: .1em .35em; border-radius: 4px; }
+
+    /* Mobile: hide less important table columns */
+    @media (max-width: 767px) {
+      .col-hide-mobile { display: none !important; }
+      .tab-label { display: none; }
+      #toast-container { left: 1rem; right: 1rem; bottom: 1rem; }
+      .km-toast { min-width: unset; width: 100%; }
+      .total-bar { font-size: .85rem; }
+      .navbar { flex-wrap: nowrap; }
+    }
+    @media (min-width: 768px) {
+      .tab-label { display: inline; }
+    }
+
+    /* Toast */
+    #toast-container {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: .5rem;
+    }
+    .km-toast {
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      padding: .65rem 1rem;
+      border-radius: 10px;
+      font-size: .88rem;
+      font-weight: 500;
+      box-shadow: 0 4px 16px rgba(59,42,26,.18);
+      animation: toast-in .2s ease;
+      min-width: 220px;
+    }
+    .km-toast.success { background: var(--coffee-dark); color: #f5ede3; }
+    .km-toast.error   { background: #b85c4a; color: #fff; }
+    .km-toast.info    { background: var(--coffee-mid); color: #fff; }
+    @keyframes toast-in {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes toast-out {
+      from { opacity: 1; transform: translateY(0); }
+      to   { opacity: 0; transform: translateY(10px); }
+    }
+  </style>
+</head>
+<body>
+
+<div id="toast-container"></div>
+
+<nav class="navbar navbar-dark bg-primary px-3 mb-4">
+  <span class="navbar-brand"><i class="bi bi-car-front-fill me-2"></i><span class="tab-label">Kilometer Bog</span></span>
+  <span class="text-white-50 small d-none d-lg-inline">
+    <i class="bi bi-shield-lock me-1"></i>Data gemmes på din PC · Adresser deles kun med OpenStreetMap til ruteberegning
+  </span>
+  <span class="text-white-50 small d-none d-lg-inline">
+    <i class="bi bi-floppy me-1"></i><span id="saved-label">Ingen data gemt endnu</span>
+  </span>
+  <div class="d-flex gap-2 align-items-center">
+    <button class="btn btn-sm btn-light" onclick="exportExcel()" title="Eksporter Excel">
+      <i class="bi bi-file-earmark-excel me-1"></i><span class="tab-label">Eksporter Excel</span>
+    </button>
+    <a href="faktura.html" class="btn btn-sm btn-outline-light" title="Faktura">
+      <i class="bi bi-receipt me-1"></i><span class="tab-label">Faktura</span>
+    </a>
+    <a href="http://www.jaig.dk/" class="btn btn-sm btn-outline-light" title="Tilbage til forsiden">
+      <i class="bi bi-house-fill me-1"></i><span class="tab-label">Forsiden</span>
+    </a>
+  </div>
+</nav>
+
+<div class="container-fluid px-4" style="max-width:1200px">
+
+  <!-- Summary bar -->
+  <div class="total-bar mb-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+      <span class="fs-5 fw-bold" id="total-km">0</span>
+      <span class="ms-1 opacity-75">km total (tur/retur)</span>
+    </div>
+    <div class="d-flex gap-3 opacity-75 small">
+      <span><i class="bi bi-check-circle me-1"></i><span id="count-done">0</span> beregnet</span>
+      <span><i class="bi bi-clock me-1"></i><span id="count-pending">0</span> afventer</span>
+      <span><i class="bi bi-exclamation-circle me-1"></i><span id="count-error">0</span> fejl</span>
+    </div>
+    <button class="btn btn-sm btn-warning fw-semibold" onclick="calculateAll()">
+      <i class="bi bi-calculator me-1"></i>Beregn alle afstande
+    </button>
+  </div>
+
+  <!-- Tabs -->
+  <ul class="nav nav-tabs" id="mainTabs">
+    <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#tab-trips"><i class="bi bi-list-ul me-1"></i><span class="tab-label">Ture</span></a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-add"><i class="bi bi-plus-circle me-1"></i><span class="tab-label">Tilføj</span></a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-import"><i class="bi bi-box-arrow-in-down me-1"></i><span class="tab-label">Importer</span></a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-settings"><i class="bi bi-gear me-1"></i><span class="tab-label">Indstillinger</span></a></li>
+  </ul>
+
+  <div class="tab-content">
+
+    <!-- TRIPS TAB -->
+    <div class="tab-pane fade show active" id="tab-trips">
+      <div class="card p-3">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <div class="section-title mb-0">Alle ture</div>
+          <div class="d-flex gap-2">
+            <input type="text" class="form-control form-control-sm" id="search-input"
+              placeholder="Søg kunde / adresse..." oninput="renderTrips()" style="width:220px">
+            <button class="btn btn-sm btn-outline-danger" onclick="clearAllTrips()">
+              <i class="bi bi-trash"></i> Ryd alle
+            </button>
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover table-sm" id="trips-table">
+            <thead class="table-light" id="trips-thead">
+              <tr>
+                <th>Dato</th>
+                <th>Kunde</th>
+                <th class="col-hide-mobile">Fra</th>
+                <th>Til</th>
+                <th class="col-hide-mobile">Formål</th>
+                <th class="text-end">Km (t/r)</th>
+                <th class="text-end rate-col" style="display:none">Godtgørelse</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="trips-tbody"></tbody>
+          </table>
+          <div id="trips-empty" class="text-center text-muted py-5" style="display:none">
+            <i class="bi bi-map fs-2 d-block mb-2"></i>Ingen ture endnu. Tilføj en tur eller importer fra Trello.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ADD TAB -->
+    <div class="tab-pane fade" id="tab-add">
+      <div class="row g-3">
+
+        <!-- Single entry -->
+        <div class="col-md-5">
+          <div class="card p-4">
+            <div class="section-title">Enkelt tur</div>
+            <div class="mb-2">
+              <label class="form-label small fw-semibold">Dato</label>
+              <input type="date" class="form-control" id="s-date">
+            </div>
+            <div class="mb-2">
+              <label class="form-label small fw-semibold">Kundenavn</label>
+              <input type="text" class="form-control" id="s-customer" placeholder="Firma / navn">
+            </div>
+            <div class="mb-2">
+              <label class="form-label small fw-semibold">Fra adresse</label>
+              <input type="text" class="form-control" id="s-from" placeholder="Lades tom = firma adresse">
+            </div>
+            <div class="mb-2">
+              <label class="form-label small fw-semibold">Til adresse <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="s-to" placeholder="Kundens adresse">
+            </div>
+            <div class="mb-3">
+              <label class="form-label small fw-semibold">Formål / noter</label>
+              <input type="text" class="form-control" id="s-purpose" placeholder="Servicebesøg, møde...">
+            </div>
+            <div id="no-office-warning" class="alert alert-warning py-2 small mb-3" style="display:none">
+              <i class="bi bi-exclamation-triangle-fill me-1"></i>
+              <strong>Firma adresse mangler.</strong>
+              Ture starter fra en tom adresse indtil du udfylder den under
+              <a href="#tab-settings" data-bs-toggle="tab" onclick="document.querySelector('[href=\'#tab-settings\']').click()">Indstillinger</a>.
+            </div>
+            <button class="btn btn-primary w-100" onclick="addSingleTrip()">
+              <i class="bi bi-plus-lg me-1"></i>Tilføj tur
+            </button>
+          </div>
+        </div>
+
+        <!-- Bulk + Excel entry -->
+        <div class="col-md-7 d-flex flex-column gap-3">
+
+          <!-- Excel import -->
+          <div class="card p-4">
+            <div class="section-title">Excel / CSV import</div>
+            <p class="text-muted small mb-3">
+              Upload en Excel- eller CSV-fil. Kolonnenavne der genkendes:<br>
+              <code>Dato</code> &nbsp;<code>Kunde</code> &nbsp;<code>Fra adresse</code> &nbsp;<code>Til adresse</code> &nbsp;<code>Formål</code>
+            </p>
+            <label class="btn btn-primary" style="cursor:pointer">
+              <i class="bi bi-file-earmark-excel me-1"></i>Vælg Excel-fil (.xlsx / .csv)
+              <input type="file" accept=".xlsx,.xls,.csv" style="display:none" onchange="importExcel(this)">
+            </label>
+            <div id="excel-result" class="mt-2"></div>
+          </div>
+
+          <!-- Text bulk -->
+          <div class="card p-4">
+            <div class="section-title">Masse-input (tekst)</div>
+            <p class="text-muted small mb-2">
+              Én tur per linje. Format: <code>dato | kunde | adresse | formål</code><br>
+              Eksempel: <code>2026-06-01 | Andersen A/S | Vestergade 1, 5000 Odense | Servicebesøg</code>
+            </p>
+            <textarea class="form-control bulk-input mb-3" id="bulk-text" rows="7"
+              placeholder="2026-06-01 | Andersen A/S | Vestergade 1, 5000 Odense C | Servicebesøg
+2026-06-03 | Jensen Teknik | Industrivej 12, 5471 Søndersø
+2026-06-05 | Skovvej 8, 5492 Vissenbjerg"></textarea>
+            <div class="d-flex gap-2">
+              <button class="btn btn-primary flex-grow-1" onclick="addBulkTrips()">
+                <i class="bi bi-upload me-1"></i>Importer linjer
+              </button>
+              <button class="btn btn-outline-secondary" onclick="document.getElementById('bulk-text').value=''">
+                Ryd
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+
+    <!-- IMPORT TAB -->
+    <div class="tab-pane fade" id="tab-import">
+
+      <!-- Source picker -->
+      <div class="d-flex gap-2 mb-4">
+        <button class="btn btn-primary active" id="import-btn-trello" onclick="switchImportSource('trello')">
+          <i class="bi bi-trello me-1"></i>Trello
+        </button>
+        <button class="btn btn-outline-secondary" id="import-btn-clickup" onclick="switchImportSource('clickup')">
+          <i class="bi bi-lightning-charge-fill me-1"></i>ClickUp
+        </button>
+      </div>
+
+      <!-- TRELLO -->
+      <div id="import-trello" class="card p-4" style="max-width:700px">
+        <div class="section-title">Trello import</div>
+        <div id="trello-step-1" class="trello-step active">
+          <h6 class="fw-semibold">Trin 1 — API nøgle &amp; token</h6>
+          <div class="alert alert-info small">
+            <b>Sådan får du din nøgle:</b><br>
+            1. Gå til <a href="https://trello.com/power-ups/admin" target="_blank">trello.com/power-ups/admin</a> og opret et Power-Up (eller brug et eksisterende).<br>
+            2. Under "API Key" kopierer du din nøgle.<br>
+            3. Klik på "Token" linket på samme side for at generere et token.<br>
+            4. Indsæt begge herunder.
+          </div>
+          <div class="mb-2">
+            <label class="form-label small fw-semibold">API Key</label>
+            <input type="text" class="form-control font-monospace" id="trello-key" placeholder="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx">
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Token</label>
+            <input type="text" class="form-control font-monospace" id="trello-token" placeholder="xxxxxxxx...">
+          </div>
+          <button class="btn btn-primary" onclick="trelloLoadBoards()"><i class="bi bi-arrow-right me-1"></i>Hent boards</button>
+          <div id="trello-step1-msg" class="mt-2"></div>
+        </div>
+        <div id="trello-step-2" class="trello-step">
+          <h6 class="fw-semibold">Trin 2 — Vælg board og lister</h6>
+          <div class="mb-2">
+            <label class="form-label small fw-semibold">Board</label>
+            <select class="form-select" id="trello-board-select" onchange="trelloLoadLists()"><option value="">Vælg board...</option></select>
+          </div>
+          <div class="mb-3" id="trello-lists-section" style="display:none">
+            <label class="form-label small fw-semibold">Lister</label>
+            <div id="trello-lists-checkboxes" class="border rounded p-2 bg-light" style="max-height:180px;overflow-y:auto"></div>
+          </div>
+          <button class="btn btn-primary" onclick="trelloLoadCards()" id="trello-load-cards-btn" style="display:none"><i class="bi bi-download me-1"></i>Hent kort</button>
+          <div id="trello-step2-msg" class="mt-2"></div>
+        </div>
+        <div id="trello-step-3" class="trello-step">
+          <h6 class="fw-semibold">Trin 3 — Kortlæg felter</h6>
+          <div class="row g-2 mb-3">
+            <div class="col-6">
+              <label class="form-label small fw-semibold">Adresse</label>
+              <select class="form-select form-select-sm" id="map-address">
+                <option value="name">Kortets navn</option>
+                <option value="desc" selected>Beskrivelse</option>
+                <option value="name_first_line">Kortets navn (1. linje)</option>
+              </select>
+            </div>
+            <div class="col-6">
+              <label class="form-label small fw-semibold">Kundenavn</label>
+              <select class="form-select form-select-sm" id="map-customer">
+                <option value="name" selected>Kortets navn</option>
+                <option value="desc">Beskrivelse</option>
+                <option value="none">Ikke i Trello</option>
+              </select>
+            </div>
+            <div class="col-6">
+              <label class="form-label small fw-semibold">Dato</label>
+              <select class="form-select form-select-sm" id="map-date">
+                <option value="due" selected>Forfaldsdato</option>
+                <option value="created">Oprettelsesdato</option>
+                <option value="none">Ikke i Trello</option>
+              </select>
+            </div>
+            <div class="col-6">
+              <label class="form-label small fw-semibold">Formål</label>
+              <select class="form-select form-select-sm" id="map-purpose">
+                <option value="list" selected>Listens navn</option>
+                <option value="desc">Beskrivelse</option>
+                <option value="none">Ikke i Trello</option>
+              </select>
+            </div>
+          </div>
+          <div class="section-title">Forhåndsvisning</div>
+          <div class="table-responsive mb-3" style="max-height:280px;overflow-y:auto">
+            <table class="table table-sm table-bordered small">
+              <thead class="table-light sticky-top">
+                <tr><th><input type="checkbox" id="trello-select-all" onchange="trelloToggleAll(this)"> Vælg</th><th>Dato</th><th>Kunde</th><th>Adresse</th><th>Formål</th></tr>
+              </thead>
+              <tbody id="trello-preview-tbody"></tbody>
+            </table>
+          </div>
+          <div class="d-flex gap-2">
+            <button class="btn btn-sm btn-outline-secondary" onclick="trelloRefreshPreview()"><i class="bi bi-arrow-clockwise me-1"></i>Opdater</button>
+            <button class="btn btn-success" onclick="trelloImportSelected()"><i class="bi bi-check2-all me-1"></i>Importer valgte</button>
+          </div>
+          <div id="trello-step3-msg" class="mt-2"></div>
+        </div>
+      </div>
+
+      <!-- CLICKUP -->
+      <div id="import-clickup" class="card p-4" style="max-width:700px;display:none">
+        <div class="section-title">ClickUp import</div>
+        <div id="cu-step-1" class="trello-step active">
+          <h6 class="fw-semibold">Trin 1 — API token</h6>
+          <div class="alert alert-info small">
+            <b>Sådan finder du dit token:</b><br>
+            1. Gå til <a href="https://app.clickup.com/settings/apps" target="_blank">app.clickup.com/settings/apps</a><br>
+            2. Under <b>API Token</b> klikker du <b>Generate</b> (eller kopiér det eksisterende).<br>
+            3. Indsæt det herunder.
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Personligt API token</label>
+            <input type="text" class="form-control font-monospace" id="cu-token" placeholder="pk_xxxxxxxxxxxxxxxx">
+          </div>
+          <button class="btn btn-primary" onclick="cuLoadWorkspaces()"><i class="bi bi-arrow-right me-1"></i>Hent workspaces</button>
+          <div id="cu-step1-msg" class="mt-2"></div>
+        </div>
+        <div id="cu-step-2" class="trello-step">
+          <h6 class="fw-semibold">Trin 2 — Vælg workspace og lister</h6>
+          <div class="mb-2">
+            <label class="form-label small fw-semibold">Workspace</label>
+            <select class="form-select" id="cu-workspace-select" onchange="cuLoadLists()"><option value="">Vælg workspace...</option></select>
+          </div>
+          <div id="cu-lists-section" style="display:none" class="mb-3">
+            <label class="form-label small fw-semibold">Lister</label>
+            <div id="cu-lists-checkboxes" class="border rounded p-2 bg-light" style="max-height:200px;overflow-y:auto"></div>
+          </div>
+          <button class="btn btn-primary" id="cu-load-tasks-btn" style="display:none" onclick="cuLoadTasks()"><i class="bi bi-download me-1"></i>Hent opgaver</button>
+          <div id="cu-step2-msg" class="mt-2"></div>
+        </div>
+        <div id="cu-step-3" class="trello-step">
+          <h6 class="fw-semibold">Trin 3 — Kortlæg felter</h6>
+          <div class="row g-2 mb-3">
+            <div class="col-6">
+              <label class="form-label small fw-semibold">Adresse</label>
+              <select class="form-select form-select-sm" id="cu-map-address">
+                <option value="desc" selected>Beskrivelse</option>
+                <option value="name">Opgavens navn</option>
+                <option value="name_first_line">Opgavens navn (1. linje)</option>
+              </select>
+            </div>
+            <div class="col-6">
+              <label class="form-label small fw-semibold">Kundenavn</label>
+              <select class="form-select form-select-sm" id="cu-map-customer">
+                <option value="name" selected>Opgavens navn</option>
+                <option value="desc">Beskrivelse</option>
+                <option value="none">Ikke i ClickUp</option>
+              </select>
+            </div>
+            <div class="col-6">
+              <label class="form-label small fw-semibold">Dato</label>
+              <select class="form-select form-select-sm" id="cu-map-date">
+                <option value="due" selected>Forfaldsdato</option>
+                <option value="created">Oprettelsesdato</option>
+                <option value="none">Ikke i ClickUp</option>
+              </select>
+            </div>
+            <div class="col-6">
+              <label class="form-label small fw-semibold">Formål</label>
+              <select class="form-select form-select-sm" id="cu-map-purpose">
+                <option value="list" selected>Listens navn</option>
+                <option value="desc">Beskrivelse</option>
+                <option value="none">Ikke i ClickUp</option>
+              </select>
+            </div>
+          </div>
+          <div class="section-title">Forhåndsvisning</div>
+          <div class="table-responsive mb-3" style="max-height:280px;overflow-y:auto">
+            <table class="table table-sm table-bordered small">
+              <thead class="table-light sticky-top">
+                <tr><th><input type="checkbox" id="cu-select-all" onchange="cuToggleAll(this)"> Vælg</th><th>Dato</th><th>Kunde</th><th>Adresse</th><th>Formål</th></tr>
+              </thead>
+              <tbody id="cu-preview-tbody"></tbody>
+            </table>
+          </div>
+          <div class="d-flex gap-2">
+            <button class="btn btn-sm btn-outline-secondary" onclick="cuRefreshPreview()"><i class="bi bi-arrow-clockwise me-1"></i>Opdater</button>
+            <button class="btn btn-success" onclick="cuImportSelected()"><i class="bi bi-check2-all me-1"></i>Importer valgte</button>
+          </div>
+          <div id="cu-step3-msg" class="mt-2"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- SETTINGS TAB -->
+    <div class="tab-pane fade" id="tab-settings">
+      <div class="card p-4" style="max-width:520px">
+        <div class="section-title">Indstillinger</div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Kontorets adresse (startpunkt)</label>
+          <input type="text" class="form-control" id="setting-office"
+            placeholder="Kontor Allé 99, 9999 Kontorville">
+          <div class="form-text">Bruges som startpunkt og slutpunkt for alle ture (tur/retur).</div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Firma / chaufførnavn (til Excel)</label>
+          <input type="text" class="form-control" id="setting-company" placeholder="Dit firma eller navn" autocomplete="off">
+        </div>
+        <div class="mb-4">
+          <label class="form-label fw-semibold">Km-sats (kr/km, til Excel) <span class="text-muted fw-normal small">— valgfri</span></label>
+          <input type="number" class="form-control" id="setting-rate" placeholder="f.eks. 3.73" step="0.01" style="max-width:150px">
+          <div class="form-text">Udfyldes kun hvis du vil have godtgørelse beregnet i Excel.</div>
+        </div>
+        <button class="btn btn-primary" onclick="saveSettings()">
+          <i class="bi bi-save me-1"></i>Gem indstillinger
+        </button>
+        <div id="settings-msg" class="mt-2"></div>
+        <hr>
+        <div class="section-title">Data</div>
+        <div class="d-flex gap-2">
+          <button class="btn btn-sm btn-outline-secondary" onclick="exportData()">
+            <i class="bi bi-cloud-download me-1"></i>Eksporter data (JSON)
+          </button>
+          <label class="btn btn-sm btn-outline-secondary mb-0">
+            <i class="bi bi-cloud-upload me-1"></i>Importer data (JSON)
+            <input type="file" accept=".json" style="display:none" onchange="importData(this)">
+          </label>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- tab-content -->
+</div><!-- container -->
+
+<!-- Edit modal -->
+<div class="modal fade" id="editModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Rediger tur</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="edit-id">
+        <div class="mb-2">
+          <label class="form-label small fw-semibold">Dato</label>
+          <input type="date" class="form-control" id="edit-date">
+        </div>
+        <div class="mb-2">
+          <label class="form-label small fw-semibold">Kundenavn</label>
+          <input type="text" class="form-control" id="edit-customer">
+        </div>
+        <div class="mb-2">
+          <label class="form-label small fw-semibold">Fra adresse</label>
+          <input type="text" class="form-control" id="edit-from">
+        </div>
+        <div class="mb-2">
+          <label class="form-label small fw-semibold">Til adresse</label>
+          <input type="text" class="form-control" id="edit-to">
+        </div>
+        <div class="mb-2">
+          <label class="form-label small fw-semibold">Formål</label>
+          <input type="text" class="form-control" id="edit-purpose">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Annuller</button>
+        <button class="btn btn-primary" onclick="saveEdit()">Gem &amp; genberegn</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// ============================================================
+//  STATE
+// ============================================================
+let state = {
+  settings: {
+    officeAddress: "",
+    company: "",
+    ratePerKm: null
+  },
+  trips: []
+};
+let geocodeCache = {};
+let trelloCards = []; // raw cards from Trello for step 3
+let trelloListMap = {}; // listId -> listName
+
+// ============================================================
+//  PERSISTENCE
+// ============================================================
+function save() {
+  const ts = new Date().toISOString();
+  localStorage.setItem("km_state", JSON.stringify(state));
+  localStorage.setItem("km_geocache", JSON.stringify(geocodeCache));
+  localStorage.setItem("km_saved", ts);
+  updateSavedLabel(ts);
+}
+
+function updateSavedLabel(ts) {
+  const el = document.getElementById("saved-label");
+  if (!el || !ts) return;
+  const d = new Date(ts);
+  const today = new Date();
+  const isToday = d.toDateString() === today.toDateString();
+  const time  = d.toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" });
+  const label = isToday ? `Gemt i dag kl. ${time}` : `Gemt ${d.toLocaleDateString("da-DK")} kl. ${time}`;
+  el.textContent = label;
+}
+function load() {
+  try {
+    const s = localStorage.getItem("km_state");
+    if (s) state = JSON.parse(s);
+    const g = localStorage.getItem("km_geocache");
+    if (g) geocodeCache = JSON.parse(g);
+  } catch(e) {}
+}
+
+// ============================================================
+//  SETTINGS
+// ============================================================
+function saveSettings() {
+  state.settings.officeAddress = document.getElementById("setting-office").value.trim() || state.settings.officeAddress;
+  state.settings.company       = document.getElementById("setting-company").value.trim();
+  const rateVal = document.getElementById("setting-rate").value;
+  state.settings.ratePerKm = rateVal ? parseFloat(rateVal) : null;
+  save();
+  updateOfficeWarning();
+  renderTrips();
+  toast("Indstillinger gemt!");
+}
+function applySettings() {
+  document.getElementById("setting-office").value  = state.settings.officeAddress;
+  document.getElementById("setting-company").value = state.settings.company || "";
+  document.getElementById("setting-rate").value    = state.settings.ratePerKm;
+  document.getElementById("s-from").placeholder = "Lades tom = firma adresse";
+  updateOfficeWarning();
+}
+
+function updateOfficeWarning() {
+  const missing = !state.settings.officeAddress;
+  document.getElementById("no-office-warning").style.display = missing ? "" : "none";
+}
+
+// ============================================================
+//  ADD TRIPS
+// ============================================================
+// ============================================================
+//  TOAST
+// ============================================================
+function toast(msg, type = "success", duration = 2800) {
+  const icons = { success: "bi-check-circle-fill", error: "bi-exclamation-circle-fill", info: "bi-info-circle-fill" };
+  const el = document.createElement("div");
+  el.className = `km-toast ${type}`;
+  el.innerHTML = `<i class="bi ${icons[type] || icons.success}"></i> ${msg}`;
+  document.getElementById("toast-container").appendChild(el);
+  setTimeout(() => {
+    el.style.animation = "toast-out .2s ease forwards";
+    setTimeout(() => el.remove(), 200);
+  }, duration);
+}
+
+function makeid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+
+function isDuplicate(date, to) {
+  const d = date.trim().toLowerCase();
+  const t = to.trim().toLowerCase();
+  return state.trips.some(x => x.date === d && x.to.trim().toLowerCase() === t);
+}
+
+function todayStr() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function addSingleTrip() {
+  const to = document.getElementById("s-to").value.trim();
+  if (!to) { alert("Angiv en destinationsadresse."); return; }
+  const date = document.getElementById("s-date").value || todayStr();
+  if (isDuplicate(date, to)) {
+    if (!confirm(`Der findes allerede en tur til "${to}" på ${date}.\nTilføj alligevel?`)) return;
+  }
+  const trip = {
+    id: makeid(),
+    date,
+    customer: document.getElementById("s-customer").value.trim(),
+    from: document.getElementById("s-from").value.trim() || state.settings.officeAddress,
+    to: to,
+    purpose: document.getElementById("s-purpose").value.trim(),
+    distanceKm: null,
+    status: "pending"
+  };
+  state.trips.push(trip);
+  save();
+  renderTrips();
+  updateSummary();
+  toast("Tur tilføjet!");
+  startCalcQueue();
+  // clear form
+  ["s-date","s-customer","s-from","s-to","s-purpose"].forEach(id => {
+    const el = document.getElementById(id);
+    el.value = id === "s-date" ? todayStr() : "";
+  });
+  // switch to trips tab
+}
+
+function parseBulkLine(line) {
+  const parts = line.split("|").map(s => s.trim());
+  // Try to detect which part is the address by looking for comma+number or postal code pattern
+  if (parts.length === 1) {
+    // Just an address
+    return { date: todayStr(), customer: "", from: state.settings.officeAddress, to: parts[0], purpose: "", status: "pending" };
+  }
+  if (parts.length === 2) {
+    // date | address  OR  customer | address
+    const maybeDate = parts[0].match(/^\d{4}-\d{2}-\d{2}$/);
+    return {
+      date: maybeDate ? parts[0] : todayStr(),
+      customer: maybeDate ? "" : parts[0],
+      from: state.settings.officeAddress,
+      to: parts[1],
+      purpose: "",
+      status: "pending"
+    };
+  }
+  if (parts.length === 3) {
+    // date | customer | address  OR  customer | address | purpose
+    const maybeDate = parts[0].match(/^\d{4}-\d{2}-\d{2}$/);
+    if (maybeDate) {
+      return { date: parts[0], customer: parts[1], from: state.settings.officeAddress, to: parts[2], purpose: "", status: "pending" };
+    } else {
+      return { date: todayStr(), customer: parts[0], from: state.settings.officeAddress, to: parts[1], purpose: parts[2], status: "pending" };
+    }
+  }
+  // 4+ parts: date | customer | address | purpose
+  return {
+    date: parts[0].match(/^\d{4}-\d{2}-\d{2}$/) ? parts[0] : todayStr(),
+    customer: parts[1] || "",
+    from: state.settings.officeAddress,
+    to: parts[2] || "",
+    purpose: parts[3] || "",
+    status: "pending"
+  };
+}
+
+function addBulkTrips() {
+  const text = document.getElementById("bulk-text").value;
+  const lines = text.split("\n").map(l => l.trim()).filter(l => l.length > 3);
+  if (!lines.length) { alert("Ingen linjer fundet."); return; }
+  let added = 0, skipped = 0;
+  lines.forEach(line => {
+    const trip = parseBulkLine(line);
+    if (!trip.to) return;
+    if (isDuplicate(trip.date, trip.to)) { skipped++; return; }
+    trip.id = makeid(); trip.distanceKm = null; state.trips.push(trip); added++;
+  });
+  save();
+  renderTrips();
+  updateSummary();
+  const skipNote = skipped ? ` · ${skipped} duplikat(er) sprunget over` : "";
+  toast(`${added} tur(e) tilføjet!${skipNote}`);
+  startCalcQueue();
+  document.getElementById("bulk-text").value = "";
+}
+
+// ============================================================
+//  GEOCODING + ROUTING
+// ============================================================
+async function geocode(address) {
+  if (geocodeCache[address]) return geocodeCache[address];
+  // Rate limit: Nominatim requires <= 1 req/s
+  await sleep(1100);
+  const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1&countrycodes=dk`;
+  const res = await fetch(url, { headers: { "Accept-Language": "da" } });
+  const data = await res.json();
+  if (!data || data.length === 0) throw new Error("Adresse ikke fundet: " + address);
+  const coord = { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
+  geocodeCache[address] = coord;
+  save();
+  return coord;
+}
+
+async function getDistance(fromAddr, toAddr) {
+  // Geocode sequentially — Nominatim allows max 1 req/sec
+  const from = await geocode(fromAddr);
+  const to   = await geocode(toAddr);
+  const url  = `https://router.project-osrm.org/route/v1/driving/${from.lon},${from.lat};${to.lon},${to.lat}?overview=false`;
+  const res  = await fetch(url);
+  if (!res.ok) throw new Error(`OSRM svarede med ${res.status}`);
+  const data = await res.json();
+  if (data.code !== "Ok") throw new Error("Rute ikke fundet mellem adresserne");
+  return data.routes[0].distance / 1000; // metres -> km
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// Background calculation queue — runs automatically, one trip at a time
+let calcRunning = false;
+
+async function startCalcQueue(notify = false) {
+  if (calcRunning) return;
+  calcRunning = true;
+  updateCalcBtn();
+
+  try {
+    // Only process "pending" trips in this pass — skip already-errored unless retry
+    const toProcess = state.trips.filter(t => t.status === "pending");
+    for (const trip of toProcess) {
+      if (!calcRunning) break; // allow external cancellation
+      trip.status = "calculating";
+      renderTrips();
+      try {
+        const km = await getDistance(trip.from, trip.to);
+        trip.distanceKm = Math.round(km * 10) / 10;
+        trip.status = "done";
+      } catch(e) {
+        trip.status = "error";
+        trip.errorMsg = e.message;
+        toast(`Fejl: ${esc(e.message)} — fortsætter med næste tur`, "error", 4000);
+      }
+      save();
+      renderTrips();
+      updateSummary();
+    }
+  } finally {
+    // Always reset the flag, even if something unexpected happens
+    calcRunning = false;
+    updateCalcBtn();
+  }
+
+  if (notify) {
+    const doneCount = state.trips.filter(t => t.status === "done").length;
+    const errCount  = state.trips.filter(t => t.status === "error").length;
+    if (errCount) toast(`Færdig · ${doneCount} beregnet, ${errCount} fejlede`, "info");
+    else toast(`Alle ${doneCount} ture beregnet!`);
+  }
+}
+
+function updateCalcBtn(hasError = false) {
+  const btn = document.querySelector('[onclick="calculateAll()"]');
+  if (!btn) return;
+  if (calcRunning) {
+    btn.disabled = true;
+    btn.className = 'btn btn-sm btn-warning fw-semibold';
+    btn.innerHTML = '<span class="spinner-border spinner-sm me-1"></span>Beregner...';
+  } else if (hasError || state.trips.some(t => t.status === "error")) {
+    btn.disabled = false;
+    btn.className = 'btn btn-sm btn-danger fw-semibold';
+    btn.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-1"></i>Fejl — prøv igen';
+  } else {
+    btn.disabled = false;
+    btn.className = 'btn btn-sm btn-warning fw-semibold';
+    btn.innerHTML = '<i class="bi bi-calculator me-1"></i>Beregn alle afstande';
+  }
+}
+
+async function calculateAll() {
+  const pending = state.trips.filter(t => t.status === "pending" || t.status === "error");
+  if (!pending.length && !calcRunning) { toast("Alle ture er allerede beregnet.", "info"); return; }
+  startCalcQueue(true);
+}
+
+// ============================================================
+//  RENDER
+// ============================================================
+function renderTrips() {
+  const q = (document.getElementById("search-input").value || "").toLowerCase();
+  const trips = state.trips
+    .filter(t => !q || t.customer.toLowerCase().includes(q) || t.to.toLowerCase().includes(q) || t.date.includes(q))
+    .sort((a,b) => a.date > b.date ? -1 : 1);
+
+  const tbody = document.getElementById("trips-tbody");
+  const empty = document.getElementById("trips-empty");
+
+  const rate = state.settings.ratePerKm;
+  document.querySelectorAll(".rate-col").forEach(el => el.style.display = rate ? "" : "none");
+
+  if (!trips.length) {
+    tbody.innerHTML = "";
+    empty.style.display = "";
+    return;
+  }
+  empty.style.display = "none";
+
+  tbody.innerHTML = trips.map(t => {
+    const badge = t.status === "done"        ? '<span class="badge badge-done">Beregnet</span>'
+                : t.status === "pending"     ? '<span class="badge badge-pending">Afventer</span>'
+                : t.status === "calculating" ? '<span class="badge bg-info text-dark"><span class="spinner-border spinner-sm"></span> Beregner</span>'
+                : `<span class="badge badge-error">Fejl</span> <button class="btn p-0 border-0 text-danger" onclick='showTripError("${t.id}")' title="Vis fejl"><i class="bi bi-exclamation-circle-fill"></i></button>`;
+    const km   = t.distanceKm != null ? `<span class="dist-cell">${(t.distanceKm*2).toFixed(1)}</span>` : "—";
+    const kr   = (t.distanceKm != null && rate) ? `<span class="dist-cell">${(t.distanceKm * 2 * rate).toFixed(2)} kr</span>` : "—";
+    return `<tr>
+      <td>${t.date}</td>
+      <td>${esc(t.customer)}</td>
+      <td class="text-muted col-hide-mobile" style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(t.from)}">${esc(t.from)}</td>
+      <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(t.to)}">${esc(t.to)}</td>
+      <td class="text-muted col-hide-mobile">${esc(t.purpose)}</td>
+      <td class="text-end">${km}</td>
+      <td class="text-end rate-col" style="display:${rate ? '' : 'none'}">${kr}</td>
+      <td>${badge}</td>
+      <td class="text-nowrap">
+        <button class="btn btn-sm btn-outline-secondary py-0 px-2 me-1" onclick='openEdit("${t.id}")' title="Rediger">
+          <i class="bi bi-pencil-fill"></i> <span class="d-none d-lg-inline">Rediger</span>
+        </button>
+        <button class="btn btn-sm btn-outline-danger py-0 px-2" onclick='deleteTrip("${t.id}")' title="Slet">
+          <i class="bi bi-trash-fill"></i>
+        </button>
+      </td>
+    </tr>`;
+  }).join("");
+}
+
+function updateSummary() {
+  let done = 0, pending = 0, errors = 0, total = 0;
+  for (const t of state.trips) {
+    if      (t.status === "done")    { done++;    total += (t.distanceKm || 0) * 2; }
+    else if (t.status === "pending" || t.status === "calculating") pending++;
+    else if (t.status === "error")   errors++;
+  }
+  document.getElementById("total-km").textContent      = total.toFixed(1);
+  document.getElementById("count-done").textContent    = done;
+  document.getElementById("count-pending").textContent = pending;
+  document.getElementById("count-error").textContent   = errors;
+}
+
+function esc(s) {
+  return (s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+// ============================================================
+//  EDIT / DELETE
+// ============================================================
+let editModal;
+function openEdit(id) {
+  const t = state.trips.find(x => x.id === id);
+  if (!t) return;
+  document.getElementById("edit-id").value       = id;
+  document.getElementById("edit-date").value     = t.date;
+  document.getElementById("edit-customer").value = t.customer;
+  document.getElementById("edit-from").value     = t.from;
+  document.getElementById("edit-to").value       = t.to;
+  document.getElementById("edit-purpose").value  = t.purpose;
+  editModal.show();
+}
+function saveEdit() {
+  const id = document.getElementById("edit-id").value;
+  const t  = state.trips.find(x => x.id === id);
+  if (!t) return;
+  const newFrom = document.getElementById("edit-from").value.trim() || state.settings.officeAddress;
+  const newTo   = document.getElementById("edit-to").value.trim();
+  const changed = newFrom !== t.from || newTo !== t.to;
+  t.date     = document.getElementById("edit-date").value;
+  t.customer = document.getElementById("edit-customer").value.trim();
+  t.from     = newFrom;
+  t.to       = newTo;
+  t.purpose  = document.getElementById("edit-purpose").value.trim();
+  if (changed) { t.status = "pending"; t.distanceKm = null; delete t.errorMsg; }
+  save();
+  renderTrips();
+  updateSummary();
+  editModal.hide();
+  if (changed) startCalcQueue();
+}
+function showTripError(id) {
+  const t = state.trips.find(x => x.id === id);
+  if (!t) return;
+  toast(`Fejl på "${t.to || 'ukendt'}": ${t.errorMsg || 'Ukendt fejl'}`, "error", 5000);
+}
+
+function deleteTrip(id) {
+  if (!confirm("Slet denne tur?")) return;
+  state.trips = state.trips.filter(t => t.id !== id);
+  save();
+  renderTrips();
+  updateSummary();
+}
+function clearAllTrips() {
+  if (!confirm("Slet ALLE ture? Dette kan ikke fortrydes.")) return;
+  state.trips = [];
+  save();
+  renderTrips();
+  updateSummary();
+}
+
+// ============================================================
+//  EXCEL EXPORT
+// ============================================================
+function exportExcel() {
+  if (!state.trips.length) { alert("Ingen ture at eksportere."); return; }
+
+  const rate = state.settings.ratePerKm || 0;
+  const rows = state.trips
+    .sort((a,b) => a.date > b.date ? 1 : -1)
+    .map(t => ({
+      "Dato":                t.date,
+      "Kunde":               t.customer,
+      "Fra adresse":         t.from,
+      "Til adresse":         t.to,
+      "Formål":              t.purpose,
+      "Km (en vej)":         t.distanceKm ?? "",
+      "Km (tur/retur)":      t.distanceKm != null ? parseFloat((t.distanceKm * 2).toFixed(1)) : "",
+      "Godtgørelse (kr)":    (t.distanceKm != null && rate) ? parseFloat((t.distanceKm * 2 * rate).toFixed(2)) : "",
+      "Status":              t.status === "done" ? "Beregnet" : t.status === "error" ? "Fejl" : "Afventer"
+    }));
+
+  const ws = XLSX.utils.json_to_sheet(rows);
+  // Column widths
+  ws["!cols"] = [10, 22, 38, 38, 22, 12, 12, 16, 12].map(w => ({ wch: w }));
+
+  // Total row — use real values so they always show correctly
+  const doneTrips   = state.trips.filter(t => t.distanceKm != null);
+  const totalRtKm   = parseFloat(doneTrips.reduce((s, t) => s + t.distanceKm * 2, 0).toFixed(1));
+  const totalKr     = rate ? parseFloat(doneTrips.reduce((s, t) => s + t.distanceKm * 2 * rate, 0).toFixed(2)) : "";
+  const totalRow    = state.trips.length + 2;
+  XLSX.utils.sheet_add_aoa(ws, [
+    ["", "", "", "", "TOTAL", "", totalRtKm, totalKr, ""]
+  ], { origin: totalRow - 1 });
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Kørselsregnskab");
+
+  // Meta sheet
+  const meta = [
+    ["Firma/Chauffør:", state.settings.company],
+    ["Kontor:", state.settings.officeAddress],
+    ["Km-sats:", rate + " kr/km"],
+    ["Eksporteret:", new Date().toLocaleString("da-DK")]
+  ];
+  const ws2 = XLSX.utils.aoa_to_sheet(meta);
+  ws2["!cols"] = [{ wch: 20 }, { wch: 45 }];
+  XLSX.utils.book_append_sheet(wb, ws2, "Info");
+
+  const filename = `kørsel_${new Date().toISOString().slice(0,10)}.xlsx`;
+  XLSX.writeFile(wb, filename);
+  toast("Excel-fil downloadet!");
+}
+
+// ============================================================
+//  DATA IMPORT / EXPORT
+// ============================================================
+// ============================================================
+//  EXCEL IMPORT
+// ============================================================
+const COL_MAP = {
+  // Dato
+  "dato": "date", "date": "date",
+  // Kunde
+  "kunde": "customer", "kundenavn": "customer", "customer": "customer", "firma": "customer",
+  // Fra
+  "fra": "from", "fra adresse": "from", "startadresse": "from", "from": "from",
+  // Til
+  "til": "to", "til adresse": "to", "destination": "to", "adresse": "to", "to": "to",
+  // Formål
+  "formål": "purpose", "formal": "purpose", "noter": "purpose", "purpose": "purpose", "notes": "purpose"
+};
+
+function importExcel(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb   = XLSX.read(e.target.result, { type: "array", cellDates: true });
+      const ws   = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, { defval: "" });
+
+      if (!rows.length) { toast("Filen er tom eller kunne ikke læses.", "error"); return; }
+
+      // Map headers
+      const firstRow = rows[0];
+      const headerMap = {}; // original header -> field key
+      Object.keys(firstRow).forEach(h => {
+        const key = COL_MAP[h.toLowerCase().trim()];
+        if (key) headerMap[h] = key;
+      });
+
+      const missing = ["to"].filter(f => !Object.values(headerMap).includes(f));
+      if (missing.length) {
+        toast(`Kolonne 'Til adresse' ikke fundet i filen.`, "error");
+        document.getElementById("excel-result").innerHTML =
+          `<div class="alert alert-danger small py-2 mt-2">Kunne ikke finde kolonnen <strong>Til adresse</strong> (eller lignende). Tjek at kolonnenavnene matcher.</div>`;
+        input.value = "";
+        return;
+      }
+
+      let added = 0, skipped = 0;
+      rows.forEach(row => {
+        const get = field => {
+          const header = Object.keys(headerMap).find(h => headerMap[h] === field);
+          return header ? String(row[header] ?? "").trim() : "";
+        };
+
+        const to = get("to");
+        if (!to) return;
+
+        // Handle dates — may come in as JS Date or string
+        let date = get("date");
+        if (date instanceof Date) {
+          date = date.toISOString().slice(0, 10);
+        } else if (date && date.match(/^\d{1,2}[./\-]\d{1,2}[./\-]\d{4}$/)) {
+          // dd/mm/yyyy or dd-mm-yyyy
+          const parts = date.split(/[./\-]/);
+          date = `${parts[2]}-${parts[1].padStart(2,"0")}-${parts[0].padStart(2,"0")}`;
+        } else if (!date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+          date = todayStr();
+        }
+
+        if (isDuplicate(date, to)) { skipped++; return; }
+
+        state.trips.push({
+          id: makeid(),
+          date,
+          customer: get("customer"),
+          from:     get("from") || state.settings.officeAddress,
+          to,
+          purpose:  get("purpose"),
+          distanceKm: null,
+          status: "pending"
+        });
+        added++;
+      });
+
+      save();
+      renderTrips();
+      updateSummary();
+      input.value = "";
+
+      const skipNote = skipped ? ` · ${skipped} duplikat(er) sprunget over` : "";
+      toast(`${added} tur(e) importeret fra Excel!${skipNote}`);
+      startCalcQueue();
+      document.getElementById("excel-result").innerHTML =
+        `<div class="alert alert-success small py-2 mt-2">${added} tur(e) tilføjet!${skipNote}</div>`;
+      setTimeout(() => document.getElementById("excel-result").innerHTML = "", 4000);
+
+    } catch(err) {
+      toast("Fejl ved læsning af fil.", "error");
+      document.getElementById("excel-result").innerHTML =
+        `<div class="alert alert-danger small py-2 mt-2">Fejl: ${esc(err.message)}</div>`;
+      input.value = "";
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function exportData() {
+  const blob = new Blob([JSON.stringify({ state, geocodeCache }, null, 2)], { type: "application/json" });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement("a");
+  a.href = url; a.download = "kilometer_data.json"; a.click();
+  URL.revokeObjectURL(url);
+}
+function importData(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const d = JSON.parse(e.target.result);
+      if (d.state) state = d.state;
+      if (d.geocodeCache) geocodeCache = d.geocodeCache;
+      save();
+      applySettings();
+      renderTrips();
+      updateSummary();
+      toast("Data importeret!");
+    } catch(_) { alert("Ugyldig JSON fil."); }
+  };
+  reader.readAsText(file);
+}
+
+// ============================================================
+//  TRELLO INTEGRATION
+// ============================================================
+function trelloAPI(path) {
+  const key   = document.getElementById("trello-key").value.trim();
+  const token = document.getElementById("trello-token").value.trim();
+  return fetch(`https://api.trello.com/1${path}&key=${key}&token=${token}`)
+    .then(r => { if (!r.ok) throw new Error("Trello API fejl: " + r.status); return r.json(); });
+}
+
+async function trelloLoadBoards() {
+  const key   = document.getElementById("trello-key").value.trim();
+  const token = document.getElementById("trello-token").value.trim();
+  if (!key || !token) { alert("Udfyld API Key og Token."); return; }
+  const msg = document.getElementById("trello-step1-msg");
+  msg.innerHTML = '<div class="spinner-border spinner-sm"></div> Henter boards...';
+  try {
+    const boards = await trelloAPI("/members/me/boards?fields=id,name,closed&filter=open");
+    const sel = document.getElementById("trello-board-select");
+    sel.innerHTML = '<option value="">Vælg board...</option>' +
+      boards.map(b => `<option value="${b.id}">${esc(b.name)}</option>`).join("");
+    trelloShowStep(2);
+    msg.innerHTML = "";
+  } catch(e) {
+    msg.innerHTML = `<div class="alert alert-danger py-1 small">Fejl: ${esc(e.message)}. Tjek din nøgle og token.</div>`;
+  }
+}
+
+async function trelloLoadLists() {
+  const boardId = document.getElementById("trello-board-select").value;
+  if (!boardId) return;
+  const section = document.getElementById("trello-lists-section");
+  section.style.display = "none";
+  document.getElementById("trello-load-cards-btn").style.display = "none";
+  try {
+    const lists = await trelloAPI(`/boards/${boardId}/lists?fields=id,name&filter=open`);
+    const container = document.getElementById("trello-lists-checkboxes");
+    container.innerHTML = lists.map(l =>
+      `<div class="form-check">
+        <input class="form-check-input trello-list-cb" type="checkbox" value="${l.id}" id="tl-${l.id}" checked>
+        <label class="form-check-label" for="tl-${l.id}">${esc(l.name)}</label>
+      </div>`
+    ).join("");
+    lists.forEach(l => { trelloListMap[l.id] = l.name; });
+    section.style.display = "";
+    document.getElementById("trello-load-cards-btn").style.display = "";
+  } catch(e) {
+    document.getElementById("trello-step2-msg").innerHTML =
+      `<div class="alert alert-danger py-1 small">Fejl: ${esc(e.message)}</div>`;
+  }
+}
+
+async function trelloLoadCards() {
+  const boardId = document.getElementById("trello-board-select").value;
+  const selectedLists = [...document.querySelectorAll(".trello-list-cb:checked")].map(c => c.value);
+  if (!selectedLists.length) { alert("Vælg mindst én liste."); return; }
+  const msg = document.getElementById("trello-step2-msg");
+  msg.innerHTML = '<div class="spinner-border spinner-sm"></div> Henter kort...';
+  try {
+    const cards = await trelloAPI(
+      `/boards/${boardId}/cards?fields=id,name,desc,due,idList&filter=all`
+    );
+    trelloCards = cards.filter(c => selectedLists.includes(c.idList));
+    msg.innerHTML = "";
+    trelloShowStep(3);
+    trelloRefreshPreview();
+  } catch(e) {
+    msg.innerHTML = `<div class="alert alert-danger py-1 small">Fejl: ${esc(e.message)}</div>`;
+  }
+}
+
+function trelloGetField(card, mapping) {
+  if (mapping === "name") return card.name || "";
+  if (mapping === "desc") return (card.desc || "").split("\n")[0].trim();
+  if (mapping === "name_first_line") return (card.name || "").split("\n")[0].trim();
+  if (mapping === "due") return card.due ? card.due.slice(0,10) : "";
+  if (mapping === "created") {
+    // Trello card ID encodes creation timestamp in the first 8 hex chars
+    const ts = parseInt(card.id.slice(0,8), 16) * 1000;
+    return new Date(ts).toISOString().slice(0,10);
+  }
+  if (mapping === "list") return trelloListMap[card.idList] || "";
+  return "";
+}
+
+function trelloRefreshPreview() {
+  const mapAddr     = document.getElementById("map-address").value;
+  const mapCustomer = document.getElementById("map-customer").value;
+  const mapDate     = document.getElementById("map-date").value;
+  const mapPurpose  = document.getElementById("map-purpose").value;
+
+  const tbody = document.getElementById("trello-preview-tbody");
+  tbody.innerHTML = trelloCards.map((c, i) => {
+    const addr     = trelloGetField(c, mapAddr);
+    const customer = trelloGetField(c, mapCustomer);
+    const date     = trelloGetField(c, mapDate) || todayStr();
+    const purpose  = trelloGetField(c, mapPurpose);
+    return `<tr class="trello-card-row">
+      <td><input type="checkbox" class="trello-import-cb" value="${i}" checked></td>
+      <td>${esc(date)}</td>
+      <td>${esc(customer)}</td>
+      <td>${esc(addr) || '<span class="text-danger">Mangler!</span>'}</td>
+      <td>${esc(purpose)}</td>
+    </tr>`;
+  }).join("");
+}
+
+function trelloToggleAll(cb) {
+  document.querySelectorAll(".trello-import-cb").forEach(c => c.checked = cb.checked);
+}
+
+function trelloImportSelected() {
+  const mapAddr     = document.getElementById("map-address").value;
+  const mapCustomer = document.getElementById("map-customer").value;
+  const mapDate     = document.getElementById("map-date").value;
+  const mapPurpose  = document.getElementById("map-purpose").value;
+  const selected    = [...document.querySelectorAll(".trello-import-cb:checked")].map(c => parseInt(c.value));
+
+  let added = 0, skipped = 0;
+  selected.forEach(i => {
+    const c    = trelloCards[i];
+    const addr = trelloGetField(c, mapAddr);
+    if (!addr) return;
+    const date = trelloGetField(c, mapDate) || todayStr();
+    if (isDuplicate(date, addr)) { skipped++; return; }
+    state.trips.push({
+      id: makeid(),
+      date,
+      customer: trelloGetField(c, mapCustomer),
+      from:     state.settings.officeAddress,
+      to:       addr,
+      purpose:  trelloGetField(c, mapPurpose),
+      distanceKm: null,
+      status: "pending"
+    });
+    added++;
+  });
+  save();
+  renderTrips();
+  updateSummary();
+  const skipNote = skipped ? ` · ${skipped} duplikat(er) sprunget over` : "";
+  toast(`${added} tur(e) importeret fra Trello!${skipNote}`);
+  startCalcQueue();
+  document.getElementById("trello-step3-msg").innerHTML =
+    `<div class="alert alert-success py-1 small">${added} tur(e) importeret!${skipNote} <a href="#tab-trips" data-bs-toggle="tab">Vis ture →</a></div>`;
+}
+
+function switchImportSource(source) {
+  document.getElementById("import-trello").style.display  = source === "trello"  ? "" : "none";
+  document.getElementById("import-clickup").style.display = source === "clickup" ? "" : "none";
+  document.getElementById("import-btn-trello").className  = source === "trello"  ? "btn btn-primary" : "btn btn-outline-secondary";
+  document.getElementById("import-btn-clickup").className = source === "clickup" ? "btn btn-primary" : "btn btn-outline-secondary";
+}
+
+function trelloShowStep(n) {
+  document.querySelectorAll(".trello-step").forEach(el => el.classList.remove("active"));
+  for (let i = 1; i <= n; i++) {
+    const el = document.getElementById(`trello-step-${i}`);
+    if (el) el.classList.add("active");
+  }
+}
+
+// ============================================================
+//  CLICKUP INTEGRATION
+// ============================================================
+let cuTasks   = [];   // raw tasks from ClickUp
+let cuListMap = {};   // listId -> listName
+
+function cuAPI(path) {
+  const token = document.getElementById("cu-token").value.trim();
+  return fetch(`https://api.clickup.com/api/v2${path}`, {
+    headers: { "Authorization": token, "Content-Type": "application/json" }
+  }).then(r => { if (!r.ok) throw new Error(`ClickUp API fejl: ${r.status}`); return r.json(); });
+}
+
+async function cuLoadWorkspaces() {
+  const token = document.getElementById("cu-token").value.trim();
+  if (!token) { alert("Indsæt dit API token."); return; }
+  const msg = document.getElementById("cu-step1-msg");
+  msg.innerHTML = '<div class="spinner-border spinner-sm"></div> Henter workspaces...';
+  try {
+    const data = await cuAPI("/team");
+    const sel  = document.getElementById("cu-workspace-select");
+    sel.innerHTML = '<option value="">Vælg workspace...</option>' +
+      data.teams.map(t => `<option value="${t.id}">${esc(t.name)}</option>`).join("");
+    cuShowStep(2);
+    msg.innerHTML = "";
+  } catch(e) {
+    msg.innerHTML = `<div class="alert alert-danger py-1 small">Fejl: ${esc(e.message)}. Tjek dit token.</div>`;
+  }
+}
+
+async function cuLoadLists() {
+  const teamId = document.getElementById("cu-workspace-select").value;
+  if (!teamId) return;
+  const msg = document.getElementById("cu-step2-msg");
+  msg.innerHTML = '<div class="spinner-border spinner-sm"></div> Henter lister...';
+  document.getElementById("cu-lists-section").style.display = "none";
+  document.getElementById("cu-load-tasks-btn").style.display = "none";
+  cuListMap = {};
+
+  try {
+    // Get all spaces in workspace
+    const spacesData = await cuAPI(`/team/${teamId}/space?archived=false`);
+    const allLists   = [];
+
+    for (const space of spacesData.spaces) {
+      // Folderless lists directly in space
+      const flData = await cuAPI(`/space/${space.id}/list?archived=false`);
+      flData.lists.forEach(l => { allLists.push(l); cuListMap[l.id] = l.name; });
+
+      // Lists inside folders
+      const foldersData = await cuAPI(`/space/${space.id}/folder?archived=false`);
+      for (const folder of foldersData.folders) {
+        const folderListData = await cuAPI(`/folder/${folder.id}/list?archived=false`);
+        folderListData.lists.forEach(l => {
+          allLists.push({ ...l, _folderName: folder.name, _spaceName: space.name });
+          cuListMap[l.id] = l.name;
+        });
+      }
+    }
+
+    const container = document.getElementById("cu-lists-checkboxes");
+    container.innerHTML = allLists.map(l => {
+      const label = l._folderName ? `${l._spaceName} / ${l._folderName} / ${l.name}` : `${l._spaceName || ''} / ${l.name}`;
+      return `<div class="form-check">
+        <input class="form-check-input cu-list-cb" type="checkbox" value="${l.id}" id="cl-${l.id}">
+        <label class="form-check-label" for="cl-${l.id}">${esc(label)}</label>
+      </div>`;
+    }).join("");
+
+    document.getElementById("cu-lists-section").style.display = "";
+    document.getElementById("cu-load-tasks-btn").style.display = "";
+    msg.innerHTML = "";
+  } catch(e) {
+    msg.innerHTML = `<div class="alert alert-danger py-1 small">Fejl: ${esc(e.message)}</div>`;
+  }
+}
+
+async function cuLoadTasks() {
+  const selectedLists = [...document.querySelectorAll(".cu-list-cb:checked")].map(c => c.value);
+  if (!selectedLists.length) { alert("Vælg mindst én liste."); return; }
+  const msg = document.getElementById("cu-step2-msg");
+  msg.innerHTML = '<div class="spinner-border spinner-sm"></div> Henter opgaver...';
+  cuTasks = [];
+
+  try {
+    for (const listId of selectedLists) {
+      let page = 0, more = true;
+      while (more) {
+        const data = await cuAPI(`/list/${listId}/task?archived=false&page=${page}`);
+        data.tasks.forEach(t => cuTasks.push({ ...t, _listId: listId }));
+        more = data.tasks.length === 100; // ClickUp returns max 100 per page
+        page++;
+      }
+    }
+    msg.innerHTML = "";
+    cuShowStep(3);
+    cuRefreshPreview();
+  } catch(e) {
+    msg.innerHTML = `<div class="alert alert-danger py-1 small">Fejl: ${esc(e.message)}</div>`;
+  }
+}
+
+function cuGetField(task, mapping) {
+  if (mapping === "name")           return task.name || "";
+  if (mapping === "name_first_line") return (task.name || "").split("\n")[0].trim();
+  if (mapping === "desc")           return (task.description || "").split("\n")[0].trim();
+  if (mapping === "list")           return cuListMap[task._listId] || "";
+  if (mapping === "due")            return task.due_date  ? new Date(parseInt(task.due_date)).toISOString().slice(0,10)     : "";
+  if (mapping === "created")        return task.date_created ? new Date(parseInt(task.date_created)).toISOString().slice(0,10) : "";
+  return "";
+}
+
+function cuRefreshPreview() {
+  const mapAddr     = document.getElementById("cu-map-address").value;
+  const mapCustomer = document.getElementById("cu-map-customer").value;
+  const mapDate     = document.getElementById("cu-map-date").value;
+  const mapPurpose  = document.getElementById("cu-map-purpose").value;
+
+  document.getElementById("cu-preview-tbody").innerHTML = cuTasks.map((t, i) => {
+    const addr     = cuGetField(t, mapAddr);
+    const customer = cuGetField(t, mapCustomer);
+    const date     = cuGetField(t, mapDate) || todayStr();
+    const purpose  = cuGetField(t, mapPurpose);
+    return `<tr class="trello-card-row">
+      <td><input type="checkbox" class="cu-import-cb" value="${i}" checked></td>
+      <td>${esc(date)}</td>
+      <td>${esc(customer)}</td>
+      <td>${esc(addr) || '<span class="text-danger">Mangler!</span>'}</td>
+      <td>${esc(purpose)}</td>
+    </tr>`;
+  }).join("");
+}
+
+function cuToggleAll(cb) {
+  document.querySelectorAll(".cu-import-cb").forEach(c => c.checked = cb.checked);
+}
+
+function cuImportSelected() {
+  const mapAddr     = document.getElementById("cu-map-address").value;
+  const mapCustomer = document.getElementById("cu-map-customer").value;
+  const mapDate     = document.getElementById("cu-map-date").value;
+  const mapPurpose  = document.getElementById("cu-map-purpose").value;
+  const selected    = [...document.querySelectorAll(".cu-import-cb:checked")].map(c => parseInt(c.value));
+
+  let added = 0, skipped = 0;
+  selected.forEach(i => {
+    const t    = cuTasks[i];
+    const addr = cuGetField(t, mapAddr);
+    if (!addr) return;
+    const date = cuGetField(t, mapDate) || todayStr();
+    if (isDuplicate(date, addr)) { skipped++; return; }
+    state.trips.push({
+      id: makeid(),
+      date,
+      customer: cuGetField(t, mapCustomer),
+      from:     state.settings.officeAddress,
+      to:       addr,
+      purpose:  cuGetField(t, mapPurpose),
+      distanceKm: null,
+      status: "pending"
+    });
+    added++;
+  });
+
+  save();
+  renderTrips();
+  updateSummary();
+  const skipNote = skipped ? ` · ${skipped} duplikat(er) sprunget over` : "";
+  toast(`${added} tur(e) importeret fra ClickUp!${skipNote}`);
+  startCalcQueue();
+  document.getElementById("cu-step3-msg").innerHTML =
+    `<div class="alert alert-success py-1 small">${added} tur(e) importeret!${skipNote} <a href="#tab-trips" data-bs-toggle="tab">Vis ture →</a></div>`;
+}
+
+function cuShowStep(n) {
+  ["cu-step-1","cu-step-2","cu-step-3"].forEach((id, idx) => {
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle("active", idx < n);
+  });
+}
+
+// ============================================================
+//  INIT
+// ============================================================
+document.addEventListener("DOMContentLoaded", () => {
+  load();
+  applySettings();
+  renderTrips();
+  updateSummary();
+  updateSavedLabel(localStorage.getItem("km_saved"));
+  editModal = new bootstrap.Modal(document.getElementById("editModal"));
+  document.getElementById("s-date").value = todayStr();
+  updateCalcBtn();
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Faktura Kalkulator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    :root {
+      --bg:         #f4f6fb;
+      --surface:    #ffffff;
+      --border:     #e2e8f0;
+      --accent:     #6366f1;
+      --accent-lt:  #eef2ff;
+      --accent2:    #0ea5e9;
+      --text:       #0f172a;
+      --muted:      #64748b;
+      --dim:        #cbd5e1;
+      --danger:     #ef4444;
+      --success:    #10b981;
+      --r:          10px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      font-family: 'Inter', 'Segoe UI', sans-serif;
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── TOP NAV ── */
+    .topnav {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: .8rem 1.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .brand {
+      font-weight: 700;
+      font-size: 1rem;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      text-decoration: none;
+    }
+    .brand-dot {
+      width: 9px; height: 9px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+    .btn-nav {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      border-radius: 7px;
+      padding: .38rem .85rem;
+      font-size: .82rem;
+      font-weight: 500;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: .35rem;
+      transition: border-color .15s, color .15s;
+    }
+    .btn-nav:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ── LAYOUT ── */
+    .wrap {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 2rem 1.25rem;
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 1.5rem;
+      align-items: start;
+    }
+    @media (max-width: 700px) { .wrap { grid-template-columns: 1fr; } }
+
+    /* ── PANEL ── */
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1rem;
+    }
+    .panel:last-child { margin-bottom: 0; }
+
+    .panel-label {
+      font-size: .68rem;
+      font-weight: 700;
+      letter-spacing: 1.3px;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: .9rem;
+    }
+
+    /* ── FORM ── */
+    label { font-size: .8rem; font-weight: 500; color: var(--muted); display: block; margin-bottom: .3rem; }
+    input[type=text], input[type=number], select {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: .48rem .75rem;
+      font-size: .88rem;
+      font-family: inherit;
+      color: var(--text);
+      outline: none;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    input::placeholder { color: var(--dim); }
+    input:focus, select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(99,102,241,.12);
+      background: #fff;
+    }
+    .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+    .input-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: .75rem; }
+    @media (max-width:520px) { .input-row, .input-row-3 { grid-template-columns: 1fr; } }
+
+    /* ── BILLED BADGE ── */
+    .billed-badge {
+      display: inline-block;
+      background: var(--accent-lt);
+      color: var(--accent);
+      border: 1px solid #c7d2fe;
+      border-radius: 7px;
+      padding: .42rem .85rem;
+      font-weight: 700;
+      font-size: .95rem;
+      font-variant-numeric: tabular-nums;
+    }
+    .billed-hint { font-size: .75rem; color: var(--dim); margin-top: .5rem; }
+
+    /* ── TOGGLE ── */
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .toggle-label { font-size: .88rem; font-weight: 500; color: var(--muted); }
+    .toggle-price { font-size: .95rem; font-weight: 600; color: var(--text); }
+    .toggle-wrap { display: flex; align-items: center; gap: .75rem; }
+    .switch { position: relative; width: 42px; height: 24px; flex-shrink: 0; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute; inset: 0;
+      background: var(--dim);
+      border-radius: 24px;
+      cursor: pointer;
+      transition: background .2s;
+    }
+    .slider::before {
+      content: '';
+      position: absolute;
+      width: 18px; height: 18px;
+      left: 3px; top: 3px;
+      background: #fff;
+      border-radius: 50%;
+      transition: transform .2s;
+    }
+    .switch input:checked + .slider { background: var(--accent); }
+    .switch input:checked + .slider::before { transform: translateX(18px); }
+
+    /* ── PRODUCT ROW ── */
+    .product-item {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: .6rem .85rem;
+      margin-bottom: .5rem;
+      display: grid;
+      grid-template-columns: 1fr 110px 110px 32px;
+      gap: .5rem;
+      align-items: center;
+    }
+    @media (max-width:520px) { .product-item { grid-template-columns: 1fr 1fr; grid-template-rows: auto auto; } }
+    .product-item input, .product-item select { font-size: .83rem; padding: .38rem .6rem; }
+    .btn-remove {
+      background: none; border: none; cursor: pointer;
+      color: var(--dim); font-size: 1rem;
+      border-radius: 5px; padding: .2rem .4rem;
+      transition: color .15s;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .btn-remove:hover { color: var(--danger); }
+    .no-products { font-size: .83rem; color: var(--dim); text-align: center; padding: .4rem 0; }
+
+    /* ── ADD BTN ── */
+    .btn-add {
+      background: none;
+      border: 1px dashed var(--dim);
+      color: var(--muted);
+      border-radius: 8px;
+      padding: .45rem 1rem;
+      font-size: .82rem;
+      font-family: inherit;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: .35rem;
+      transition: border-color .15s, color .15s;
+      margin-top: .25rem;
+    }
+    .btn-add:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ── SUMMARY BOX ── */
+    .summary-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 1.4rem 1.5rem;
+      position: sticky;
+      top: 1.5rem;
+    }
+    .s-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: .3rem 0;
+      font-size: .88rem;
+    }
+    .s-row .lbl { color: var(--muted); }
+    .s-row .val { font-variant-numeric: tabular-nums; font-weight: 500; }
+    .s-divider { border: none; border-top: 1px solid var(--border); margin: .65rem 0; }
+    .s-total {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding-top: .3rem;
+    }
+    .s-total .lbl { font-weight: 600; font-size: .95rem; }
+    .s-total .val {
+      font-size: 1.7rem;
+      font-weight: 700;
+      color: var(--accent);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ── PRINT BTN ── */
+    .btn-print {
+      width: 100%;
+      margin-top: 1.25rem;
+      padding: .75rem;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: .92rem;
+      font-family: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: .5rem;
+      transition: background .15s, transform .1s;
+    }
+    .btn-print:hover { background: #4f46e5; }
+    .btn-print:active { transform: scale(.98); }
+    .print-hint { font-size: .73rem; color: var(--dim); text-align: center; margin-top: .4rem; }
+
+    /* ══════════════════════════════════════════════
+       PRINT — clean invoice, UI completely hidden
+    ══════════════════════════════════════════════ */
+    @media screen { #receipt { display: none; } }
+
+    @media print {
+      @page { margin: 1.8cm 1.8cm 2cm; size: A4; }
+
+      body * { visibility: hidden; }
+      #receipt, #receipt * { visibility: visible; }
+      #receipt {
+        display: block !important;
+        position: fixed;
+        inset: 0;
+        background: #fff;
+        font-family: 'Inter','Segoe UI', sans-serif;
+        color: #0f172a;
+        font-size: 10.5pt;
+        line-height: 1.5;
+      }
+    }
+
+    /* ── RECEIPT DOM (always rendered, screen:hidden) ── */
+    #receipt {
+      padding: 0;
+    }
+    .rc-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 2rem;
+    }
+    .rc-company-name { font-size: 18pt; font-weight: 700; color: #0f172a; }
+    .rc-company-sub  { font-size: 9pt; color: #64748b; margin-top: .15rem; }
+    .rc-meta         { text-align: right; font-size: 9pt; color: #64748b; }
+    .rc-meta-title   { font-size: 22pt; font-weight: 700; color: #6366f1; line-height: 1; margin-bottom: .4rem; }
+    .rc-divider { border: none; border-top: 1.5px solid #e2e8f0; margin: 1rem 0; }
+    .rc-customer-block { margin-bottom: 1.5rem; }
+    .rc-customer-label { font-size: 8pt; text-transform: uppercase; letter-spacing: 1px; color: #94a3b8; margin-bottom: .2rem; }
+    .rc-customer-name  { font-size: 11pt; font-weight: 600; }
+
+    .rc-table { width: 100%; border-collapse: collapse; margin-bottom: 1.5rem; }
+    .rc-table thead tr { background: #f8fafc; }
+    .rc-table th {
+      font-size: 8pt;
+      text-transform: uppercase;
+      letter-spacing: .9px;
+      color: #94a3b8;
+      font-weight: 600;
+      padding: .55rem .75rem;
+      border-bottom: 1px solid #e2e8f0;
+      text-align: left;
+    }
+    .rc-table th.right { text-align: right; }
+    .rc-table td {
+      padding: .55rem .75rem;
+      font-size: 10pt;
+      border-bottom: 1px solid #f1f5f9;
+      vertical-align: middle;
+    }
+    .rc-table td.right { text-align: right; font-variant-numeric: tabular-nums; }
+    .rc-table tbody tr:last-child td { border-bottom: none; }
+
+    .rc-totals { margin-left: auto; width: 260px; }
+    .rc-tot-row { display: flex; justify-content: space-between; font-size: 10pt; padding: .2rem 0; color: #64748b; }
+    .rc-tot-row .v { font-variant-numeric: tabular-nums; }
+    .rc-tot-divider { border: none; border-top: 1px solid #e2e8f0; margin: .5rem 0; }
+    .rc-tot-total { display: flex; justify-content: space-between; align-items: baseline; padding-top: .2rem; }
+    .rc-tot-total .l { font-size: 11pt; font-weight: 700; }
+    .rc-tot-total .v { font-size: 15pt; font-weight: 700; color: #6366f1; font-variant-numeric: tabular-nums; }
+
+    .rc-footer { position: absolute; bottom: 0; left: 0; right: 0; padding-top: 1rem; border-top: 1px solid #e2e8f0; font-size: 8pt; color: #94a3b8; text-align: center; }
+  </style>
+</head>
+<body>
+
+<!-- ══ APP UI ══ -->
+<nav class="topnav">
+  <a class="brand" href="#">
+    <span class="brand-dot"></span>
+    Faktura Kalkulator
+  </a>
+  <a href="index.html" class="btn-nav">
+    <i class="bi bi-car-front-fill"></i> Kilometer Bog
+  </a>
+</nav>
+
+<div class="wrap">
+  <div class="left-col">
+
+    <!-- Firmaoplysninger -->
+    <div class="panel">
+      <div class="panel-label">Firmaoplysninger</div>
+      <div class="input-row-3" style="margin-bottom:.75rem">
+        <div>
+          <label>Firmanavn</label>
+          <input type="text" id="company-name" placeholder="Dit firma" oninput="saveInfo()">
+        </div>
+        <div>
+          <label>Telefon</label>
+          <input type="text" id="company-phone" placeholder="f.eks. 12 34 56 78" oninput="saveInfo()">
+        </div>
+        <div>
+          <label>E-mail</label>
+          <input type="text" id="company-email" placeholder="din@mail.dk" oninput="saveInfo()">
+        </div>
+      </div>
+      <div class="input-row">
+        <div>
+          <label>Kundenavn</label>
+          <input type="text" id="customer-name" placeholder="Kundens navn">
+        </div>
+        <div>
+          <label>Faktura nr. <span style="color:var(--dim);font-weight:400">(valgfri)</span></label>
+          <input type="text" id="invoice-no" placeholder="2026-001" oninput="saveInfo()">
+        </div>
+      </div>
+    </div>
+
+    <!-- Arbejdstid -->
+    <div class="panel">
+      <div class="panel-label">Arbejdstid</div>
+      <div class="input-row-3">
+        <div>
+          <label>Timer</label>
+          <input type="text" id="hours" value="0" inputmode="decimal" placeholder="f.eks. 1.5" oninput="calc()">
+        </div>
+        <div>
+          <label>Minutter</label>
+          <input type="number" id="minutes" min="0" max="59" value="0" oninput="calc()">
+        </div>
+        <div>
+          <label>Faktureres</label>
+          <div class="billed-badge" id="billed-time">0 t</div>
+        </div>
+      </div>
+      <div class="billed-hint">600 kr/time &nbsp;·&nbsp; afrundes op til nærmeste ½ time</div>
+    </div>
+
+    <!-- Servicebil -->
+    <div class="panel">
+      <div class="panel-label">Servicebil</div>
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-price">150 kr</div>
+          <div class="toggle-label" style="font-size:.78rem;margin-top:.15rem">Fast gebyr pr. besøg uanset afstand</div>
+        </div>
+        <div class="toggle-wrap">
+          <span style="font-size:.8rem;color:var(--muted)" id="service-lbl">Inkluderet</span>
+          <label class="switch">
+            <input type="checkbox" id="service-charge" checked onchange="calc()">
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Produkter -->
+    <div class="panel">
+      <div class="panel-label">Produkter / materialer</div>
+      <div id="products-list"></div>
+      <div id="no-products" class="no-products"><i class="bi bi-box-seam" style="margin-right:.3rem"></i>Ingen produkter tilføjet</div>
+      <button class="btn-add" onclick="addProduct()">
+        <i class="bi bi-plus-lg"></i> Tilføj produkt
+      </button>
+    </div>
+
+  </div><!-- /left -->
+
+  <!-- RIGHT: Summary -->
+  <div class="right-col">
+    <div class="summary-box">
+      <div class="panel-label" style="margin-bottom:1rem">Oversigt</div>
+
+      <div id="s-labor-row" class="s-row" style="display:none">
+        <span class="lbl">Arbejdstid (<span id="s-billed-label">0 t</span>)</span>
+        <span class="val" id="s-labor">0 kr</span>
+      </div>
+      <div id="s-service-row" class="s-row">
+        <span class="lbl">Servicebil</span>
+        <span class="val">150 kr</span>
+      </div>
+      <div id="s-products-lines"></div>
+      <hr class="s-divider">
+      <div class="s-row">
+        <span class="lbl">Subtotal ex. moms</span>
+        <span class="val" id="s-subtotal">150 kr</span>
+      </div>
+      <div class="s-row">
+        <span class="lbl">Moms (25%)</span>
+        <span class="val" id="s-vat">38 kr</span>
+      </div>
+      <hr class="s-divider">
+      <div class="s-total">
+        <span class="lbl">Total inkl. moms</span>
+        <span class="val" id="s-total">188 kr</span>
+      </div>
+
+      <button class="btn-print" onclick="printReceipt()">
+        <i class="bi bi-printer-fill"></i> Udskriv / gem som PDF
+      </button>
+      <div class="print-hint">Vælg "Gem som PDF" i printervalget</div>
+    </div>
+  </div>
+
+</div><!-- /wrap -->
+
+
+<!-- ══ PRINT RECEIPT (hidden on screen, only visible on print) ══ -->
+<div id="receipt">
+  <div class="rc-header">
+    <div>
+      <div class="rc-company-name" id="rc-company"></div>
+      <div class="rc-company-sub" id="rc-contact"></div>
+    </div>
+    <div>
+      <div class="rc-meta-title">Faktura</div>
+      <div class="rc-meta" id="rc-meta"></div>
+    </div>
+  </div>
+
+  <div class="rc-customer-block" id="rc-customer-block" style="display:none">
+    <div class="rc-customer-label">Faktureres til</div>
+    <div class="rc-customer-name" id="rc-customer-name"></div>
+    <hr class="rc-divider" style="margin-top:.75rem">
+  </div>
+  <hr class="rc-divider" id="rc-top-divider">
+
+  <table class="rc-table">
+    <thead>
+      <tr>
+        <th style="width:55%">Beskrivelse</th>
+        <th class="right" style="width:15%">Antal</th>
+        <th class="right" style="width:15%">Enhedspris</th>
+        <th class="right" style="width:15%">Beløb</th>
+      </tr>
+    </thead>
+    <tbody id="rc-lines"></tbody>
+  </table>
+
+  <div class="rc-totals">
+    <div class="rc-tot-row"><span>Subtotal ex. moms</span><span class="v" id="rc-subtotal"></span></div>
+    <div class="rc-tot-row"><span>Moms (25%)</span><span class="v" id="rc-vat"></span></div>
+    <div class="rc-tot-divider"></div>
+    <div class="rc-tot-total">
+      <span class="l">Total inkl. moms</span>
+      <span class="v" id="rc-total"></span>
+    </div>
+  </div>
+
+  <div class="rc-footer" id="rc-footer"></div>
+</div>
+
+<script>
+let products = [];
+let productId = 0;
+
+function roundHalfUp(mins) {
+  if (mins <= 0) return 0;
+  return Math.ceil(mins / 30) * 0.5;
+}
+function fmt(n)  { return n.toFixed(0) + ' kr'; }
+function fmtH(h) { return String(h).replace('.', ',') + ' t'; }
+function esc(s)  { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escA(s) { return (s||'').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+
+function addProduct() {
+  const id = ++productId;
+  products.push({ id, name: '', price: 0, withVat: false });
+  renderProducts();
+  calc();
+}
+function removeProduct(id) {
+  products = products.filter(p => p.id !== id);
+  renderProducts();
+  calc();
+}
+function updateProduct(id, field, value) {
+  const p = products.find(p => p.id === id);
+  if (p) { p[field] = value; calc(); }
+}
+
+function renderProducts() {
+  const list = document.getElementById('products-list');
+  const none = document.getElementById('no-products');
+  none.style.display = products.length === 0 ? '' : 'none';
+  list.innerHTML = '';
+  products.forEach(p => {
+    const d = document.createElement('div');
+    d.className = 'product-item';
+    d.innerHTML = `
+      <input type="text" placeholder="Produktnavn" value="${escA(p.name)}"
+        oninput="updateProduct(${p.id},'name',this.value)">
+      <div style="display:flex;align-items:center;gap:4px">
+        <input type="number" placeholder="Pris" min="0" value="${p.price||''}" style="flex:1"
+          oninput="updateProduct(${p.id},'price',parseFloat(this.value)||0)">
+        <span style="font-size:.78rem;color:var(--muted);white-space:nowrap">kr</span>
+      </div>
+      <select onchange="updateProduct(${p.id},'withVat',this.value==='true')">
+        <option value="false" ${!p.withVat?'selected':''}>Ex. moms</option>
+        <option value="true"  ${p.withVat?'selected':''}>Inkl. moms</option>
+      </select>
+      <button class="btn-remove" onclick="removeProduct(${p.id})" aria-label="Fjern">
+        <i class="bi bi-trash3"></i>
+      </button>`;
+    list.appendChild(d);
+  });
+}
+
+function calc() {
+  const h = parseFloat((document.getElementById('hours').value||'0').replace(',','.'))||0;
+  const m = parseInt(document.getElementById('minutes').value)||0;
+  const billedH = roundHalfUp(h*60+m);
+  document.getElementById('billed-time').textContent = fmtH(billedH);
+
+  const laborEx = billedH * 600;
+  document.getElementById('s-labor-row').style.display = billedH>0 ? '' : 'none';
+  document.getElementById('s-labor').textContent = fmt(laborEx);
+  document.getElementById('s-billed-label').textContent = fmtH(billedH);
+
+  const svc = document.getElementById('service-charge').checked;
+  document.getElementById('s-service-row').style.display = svc ? '' : 'none';
+  document.getElementById('service-lbl').textContent = svc ? 'Inkluderet' : 'Ikke inkluderet';
+  const serviceEx = svc ? 150 : 0;
+
+  let prodsEx = 0;
+  const pLines = [];
+  products.forEach(p => {
+    const ex = p.withVat ? p.price/1.25 : p.price;
+    prodsEx += ex;
+    pLines.push({ label: p.name||'Produkt', ex });
+  });
+
+  document.getElementById('s-products-lines').innerHTML = pLines.map(l =>
+    `<div class="s-row"><span class="lbl">${esc(l.label)}</span><span class="val">${fmt(l.ex)}</span></div>`
+  ).join('');
+
+  const sub   = laborEx + serviceEx + prodsEx;
+  const vat   = sub * 0.25;
+  const total = sub + vat;
+  document.getElementById('s-subtotal').textContent = fmt(sub);
+  document.getElementById('s-vat').textContent      = fmt(vat);
+  document.getElementById('s-total').textContent    = fmt(total);
+}
+
+function saveInfo() {
+  localStorage.setItem('fk_company',  document.getElementById('company-name').value);
+  localStorage.setItem('fk_phone',    document.getElementById('company-phone').value);
+  localStorage.setItem('fk_email',    document.getElementById('company-email').value);
+  localStorage.setItem('fk_invoice',  document.getElementById('invoice-no').value);
+}
+
+function incrementInvoiceNo(val) {
+  // Find trailing digits and increment them, preserving prefix (e.g. "2026-041" → "2026-042")
+  const match = val.match(/^(.*?)(\d+)$/);
+  if (!match) return val;
+  const prefix  = match[1];
+  const num     = match[2];
+  const next    = String(parseInt(num, 10) + 1).padStart(num.length, '0');
+  return prefix + next;
+}
+
+function printReceipt() {
+  const company   = document.getElementById('company-name').value.trim();
+  const phone     = document.getElementById('company-phone').value.trim();
+  const email     = document.getElementById('company-email').value.trim();
+  const customer  = document.getElementById('customer-name').value.trim();
+  const invoiceNo = document.getElementById('invoice-no').value.trim();
+  const dateStr   = new Date().toLocaleDateString('da-DK',{day:'2-digit',month:'long',year:'numeric'});
+
+  document.getElementById('rc-company').textContent = company;
+  const contactParts = [];
+  if (phone) contactParts.push('Tlf. ' + phone);
+  if (email) contactParts.push('E-mail: ' + email);
+  document.getElementById('rc-contact').textContent = contactParts.join('  ·  ');
+
+  let meta = 'Dato: ' + dateStr;
+  if (invoiceNo) meta += '\nFaktura nr. ' + invoiceNo;
+  document.getElementById('rc-meta').style.whiteSpace = 'pre';
+  document.getElementById('rc-meta').textContent = meta;
+
+  const custBlock = document.getElementById('rc-customer-block');
+  const topDiv    = document.getElementById('rc-top-divider');
+  if (customer) {
+    document.getElementById('rc-customer-name').textContent = customer;
+    custBlock.style.display = '';
+    topDiv.style.display = 'none';
+  } else {
+    custBlock.style.display = 'none';
+    topDiv.style.display = '';
+  }
+
+  // Build line items
+  const h = parseFloat((document.getElementById('hours').value||'0').replace(',','.'))||0;
+  const m = parseInt(document.getElementById('minutes').value)||0;
+  const billedH = roundHalfUp(h*60+m);
+  const svc = document.getElementById('service-charge').checked;
+  const lines = [];
+
+  if (billedH > 0) {
+    lines.push({ desc: 'Arbejdstid', qty: fmtH(billedH), unit: '600 kr/t', amount: billedH*600 });
+  }
+  if (svc) {
+    lines.push({ desc: 'Servicebil (fast gebyr)', qty: '1', unit: '150 kr', amount: 150 });
+  }
+  products.forEach(p => {
+    const ex = p.withVat ? p.price/1.25 : p.price;
+    const unitLabel = p.withVat ? '(inkl. moms omregnet)' : '';
+    lines.push({ desc: p.name||'Produkt', qty: '1', unit: ex.toFixed(0)+' kr '+unitLabel, amount: ex });
+  });
+
+  const sub   = lines.reduce((s,l)=>s+l.amount,0);
+  const vat   = sub*0.25;
+  const total = sub+vat;
+
+  document.getElementById('rc-lines').innerHTML = lines.map(l =>
+    `<tr>
+      <td>${esc(l.desc)}</td>
+      <td class="right">${esc(l.qty)}</td>
+      <td class="right">${esc(l.unit)}</td>
+      <td class="right">${l.amount.toFixed(0)} kr</td>
+    </tr>`
+  ).join('') || `<tr><td colspan="4" style="color:#94a3b8;font-size:9pt">Ingen poster</td></tr>`;
+
+  document.getElementById('rc-subtotal').textContent = sub.toFixed(0)+' kr';
+  document.getElementById('rc-vat').textContent      = vat.toFixed(0)+' kr';
+  document.getElementById('rc-total').textContent    = total.toFixed(0)+' kr';
+
+  const footerParts = [];
+  if (company) footerParts.push(company);
+  if (phone)   footerParts.push('Tlf. ' + phone);
+  if (email)   footerParts.push(email);
+  document.getElementById('rc-footer').textContent = footerParts.join('  ·  ');
+
+  window.print();
+
+  // Auto-increment invoice number after printing
+  const invoiceEl = document.getElementById('invoice-no');
+  if (invoiceEl.value.trim()) {
+    const next = incrementInvoiceNo(invoiceEl.value.trim());
+    invoiceEl.value = next;
+    saveInfo();
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const cn = localStorage.getItem('fk_company');
+  const ph = localStorage.getItem('fk_phone');
+  const em = localStorage.getItem('fk_email');
+  const iv = localStorage.getItem('fk_invoice');
+  if (cn) document.getElementById('company-name').value = cn;
+  if (ph) document.getElementById('company-phone').value = ph;
+  if (em) document.getElementById('company-email').value = em;
+  if (iv) document.getElementById('invoice-no').value = iv;
+  calc();
+});
+</script>
+</body>
+</html>
