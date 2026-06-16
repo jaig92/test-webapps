@@ -658,7 +658,7 @@ function printReceipt() {
   const contactParts = [];
   if (phone) contactParts.push('Tlf. ' + phone);
   if (email) contactParts.push('E-mail: ' + email);
-  document.getElementById('rc-contact').textContent = contactParts.join('  Â·  ');
+  document.getElementById('rc-contact').textContent = contactParts.join('  ·  ');
 
   let meta = 'Dato: ' + dateStr;
   if (invoiceNo) meta += '\nFaktura nr. ' + invoiceNo;
@@ -681,13 +681,15 @@ function printReceipt() {
   const m = parseInt(document.getElementById('minutes').value)||0;
   const billedH = roundHalfUp(h*60+m);
   const svc = document.getElementById('service-charge').checked;
+  const rate = parseFloat(document.getElementById('hourly-rate').value) || 0;
+  const svcP = parseFloat(document.getElementById('service-price').value) || 0;
   const lines = [];
 
   if (billedH > 0) {
-    lines.push({ desc: 'Arbejdstid', qty: fmtH(billedH), unit: '600 kr/t', amount: billedH*600 });
+    lines.push({ desc: 'Arbejdstid', qty: fmtH(billedH), unit: rate+' kr/t', amount: billedH*rate });
   }
   if (svc) {
-    lines.push({ desc: 'Servicebil (fast gebyr)', qty: '1', unit: '150 kr', amount: 150 });
+    lines.push({ desc: 'Servicebil (fast gebyr)', qty: '1', unit: svcP+' kr', amount: svcP });
   }
   products.forEach(p => {
     const ex = p.withVat ? p.price/1.25 : p.price;
@@ -716,7 +718,7 @@ function printReceipt() {
   if (company) footerParts.push(company);
   if (phone)   footerParts.push('Tlf. ' + phone);
   if (email)   footerParts.push(email);
-  document.getElementById('rc-footer').textContent = footerParts.join('  Â·  ');
+  document.getElementById('rc-footer').textContent = footerParts.join('  ·  ');
 
   window.print();
 
