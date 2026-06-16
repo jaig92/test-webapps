@@ -396,7 +396,7 @@
           <input type="number" id="hourly-rate" min="0" value="600" oninput="saveInfo(); calc()">
         </div>
         <div style="display:flex;align-items:flex-end">
-          <div class="billed-hint" style="margin:0 0 .5rem">Afrundes op til nÃ¦rmeste Â½ time</div>
+          <div class="billed-hint" style="margin:0 0 .5rem">Afrundes op til nærmeste ½ time</div>
         </div>
       </div>
       <div class="input-row-3">
@@ -421,10 +421,10 @@
       <div class="toggle-row">
         <div style="display:flex;align-items:center;gap:.75rem;flex:1">
           <div style="width:130px">
-            <label>KÃ¸rselspris (kr)</label>
+            <label>Kørselspris (kr)</label>
             <input type="number" id="service-price" min="0" value="150" oninput="saveInfo(); calc()">
           </div>
-          <div class="toggle-label" style="font-size:.78rem;margin-top:1.2rem">Fast gebyr pr. besÃ¸g uanset afstand</div>
+          <div class="toggle-label" style="font-size:.78rem;margin-top:1.2rem">Fast gebyr pr. besøg uanset afstand</div>
         </div>
         <div class="toggle-wrap">
           <span style="font-size:.8rem;color:var(--muted)" id="service-lbl">Inkluderet</span>
@@ -440,9 +440,9 @@
     <div class="panel">
       <div class="panel-label">Produkter / materialer</div>
       <div id="products-list"></div>
-      <div id="no-products" class="no-products"><i class="bi bi-box-seam" style="margin-right:.3rem"></i>Ingen produkter tilfÃ¸jet</div>
+      <div id="no-products" class="no-products"><i class="bi bi-box-seam" style="margin-right:.3rem"></i>Ingen produkter tilføjet</div>
       <button class="btn-add" onclick="addProduct()">
-        <i class="bi bi-plus-lg"></i> TilfÃ¸j produkt
+        <i class="bi bi-plus-lg"></i> Tilføj produkt
       </button>
     </div>
 
@@ -480,7 +480,7 @@
       <button class="btn-print" onclick="printReceipt()">
         <i class="bi bi-printer-fill"></i> Udskriv / gem som PDF
       </button>
-      <div class="print-hint">VÃ¦lg "Gem som PDF" i printervalget</div>
+      <div class="print-hint">Vælg "Gem som PDF" i printervalget</div>
     </div>
   </div>
 
@@ -513,7 +513,7 @@
         <th style="width:55%">Beskrivelse</th>
         <th class="right" style="width:15%">Antal</th>
         <th class="right" style="width:15%">Enhedspris</th>
-        <th class="right" style="width:15%">BelÃ¸b</th>
+        <th class="right" style="width:15%">Beløb</th>
       </tr>
     </thead>
     <tbody id="rc-lines"></tbody>
