@@ -31,7 +31,7 @@
       min-height: 100vh;
     }
 
-    /* ── TOP NAV ── */
+    /* â”€â”€ TOP NAV â”€â”€ */
     .topnav {
       background: var(--surface);
       border-bottom: 1px solid var(--border);
@@ -70,7 +70,7 @@
     }
     .btn-nav:hover { border-color: var(--accent); color: var(--accent); }
 
-    /* ── LAYOUT ── */
+    /* â”€â”€ LAYOUT â”€â”€ */
     .wrap {
       max-width: 860px;
       margin: 0 auto;
@@ -82,7 +82,7 @@
     }
     @media (max-width: 700px) { .wrap { grid-template-columns: 1fr; } }
 
-    /* ── PANEL ── */
+    /* â”€â”€ PANEL â”€â”€ */
     .panel {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -101,7 +101,7 @@
       margin-bottom: .9rem;
     }
 
-    /* ── FORM ── */
+    /* â”€â”€ FORM â”€â”€ */
     label { font-size: .8rem; font-weight: 500; color: var(--muted); display: block; margin-bottom: .3rem; }
     input[type=text], input[type=number], select {
       width: 100%;
@@ -125,7 +125,7 @@
     .input-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: .75rem; }
     @media (max-width:520px) { .input-row, .input-row-3 { grid-template-columns: 1fr; } }
 
-    /* ── BILLED BADGE ── */
+    /* â”€â”€ BILLED BADGE â”€â”€ */
     .billed-badge {
       display: inline-block;
       background: var(--accent-lt);
@@ -139,7 +139,7 @@
     }
     .billed-hint { font-size: .75rem; color: var(--dim); margin-top: .5rem; }
 
-    /* ── TOGGLE ── */
+    /* â”€â”€ TOGGLE â”€â”€ */
     .toggle-row {
       display: flex;
       align-items: center;
@@ -169,7 +169,7 @@
     .switch input:checked + .slider { background: var(--accent); }
     .switch input:checked + .slider::before { transform: translateX(18px); }
 
-    /* ── PRODUCT ROW ── */
+    /* â”€â”€ PRODUCT ROW â”€â”€ */
     .product-item {
       background: var(--bg);
       border: 1px solid var(--border);
@@ -193,7 +193,7 @@
     .btn-remove:hover { color: var(--danger); }
     .no-products { font-size: .83rem; color: var(--dim); text-align: center; padding: .4rem 0; }
 
-    /* ── ADD BTN ── */
+    /* â”€â”€ ADD BTN â”€â”€ */
     .btn-add {
       background: none;
       border: 1px dashed var(--dim);
@@ -212,7 +212,7 @@
     }
     .btn-add:hover { border-color: var(--accent); color: var(--accent); }
 
-    /* ── SUMMARY BOX ── */
+    /* â”€â”€ SUMMARY BOX â”€â”€ */
     .summary-box {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -245,7 +245,7 @@
       font-variant-numeric: tabular-nums;
     }
 
-    /* ── PRINT BTN ── */
+    /* â”€â”€ PRINT BTN â”€â”€ */
     .btn-print {
       width: 100%;
       margin-top: 1.25rem;
@@ -268,9 +268,9 @@
     .btn-print:active { transform: scale(.98); }
     .print-hint { font-size: .73rem; color: var(--dim); text-align: center; margin-top: .4rem; }
 
-    /* ══════════════════════════════════════════════
-       PRINT — clean invoice, UI completely hidden
-    ══════════════════════════════════════════════ */
+    /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+       PRINT â€” clean invoice, UI completely hidden
+    â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
     @media screen { #receipt { display: none; } }
 
     @media print {
@@ -290,7 +290,7 @@
       }
     }
 
-    /* ── RECEIPT DOM (always rendered, screen:hidden) ── */
+    /* â”€â”€ RECEIPT DOM (always rendered, screen:hidden) â”€â”€ */
     #receipt {
       padding: 0;
     }
@@ -344,7 +344,7 @@
 </head>
 <body>
 
-<!-- ══ APP UI ══ -->
+<!-- â•â• APP UI â•â• -->
 <nav class="topnav">
   <a class="brand" href="#">
     <span class="brand-dot"></span>
@@ -390,6 +390,15 @@
     <!-- Arbejdstid -->
     <div class="panel">
       <div class="panel-label">Arbejdstid</div>
+      <div class="input-row" style="margin-bottom:.75rem">
+        <div>
+          <label>Timetakst (kr/time)</label>
+          <input type="number" id="hourly-rate" min="0" value="600" oninput="saveInfo(); calc()">
+        </div>
+        <div style="display:flex;align-items:flex-end">
+          <div class="billed-hint" style="margin:0 0 .5rem">Afrundes op til nÃ¦rmeste Â½ time</div>
+        </div>
+      </div>
       <div class="input-row-3">
         <div>
           <label>Timer</label>
@@ -404,16 +413,18 @@
           <div class="billed-badge" id="billed-time">0 t</div>
         </div>
       </div>
-      <div class="billed-hint">600 kr/time &nbsp;·&nbsp; afrundes op til nærmeste ½ time</div>
     </div>
 
     <!-- Servicebil -->
     <div class="panel">
       <div class="panel-label">Servicebil</div>
       <div class="toggle-row">
-        <div>
-          <div class="toggle-price">150 kr</div>
-          <div class="toggle-label" style="font-size:.78rem;margin-top:.15rem">Fast gebyr pr. besøg uanset afstand</div>
+        <div style="display:flex;align-items:center;gap:.75rem;flex:1">
+          <div style="width:130px">
+            <label>KÃ¸rselspris (kr)</label>
+            <input type="number" id="service-price" min="0" value="150" oninput="saveInfo(); calc()">
+          </div>
+          <div class="toggle-label" style="font-size:.78rem;margin-top:1.2rem">Fast gebyr pr. besÃ¸g uanset afstand</div>
         </div>
         <div class="toggle-wrap">
           <span style="font-size:.8rem;color:var(--muted)" id="service-lbl">Inkluderet</span>
@@ -429,9 +440,9 @@
     <div class="panel">
       <div class="panel-label">Produkter / materialer</div>
       <div id="products-list"></div>
-      <div id="no-products" class="no-products"><i class="bi bi-box-seam" style="margin-right:.3rem"></i>Ingen produkter tilføjet</div>
+      <div id="no-products" class="no-products"><i class="bi bi-box-seam" style="margin-right:.3rem"></i>Ingen produkter tilfÃ¸jet</div>
       <button class="btn-add" onclick="addProduct()">
-        <i class="bi bi-plus-lg"></i> Tilføj produkt
+        <i class="bi bi-plus-lg"></i> TilfÃ¸j produkt
       </button>
     </div>
 
@@ -448,7 +459,7 @@
       </div>
       <div id="s-service-row" class="s-row">
         <span class="lbl">Servicebil</span>
-        <span class="val">150 kr</span>
+        <span class="val" id="s-service-val">150 kr</span>
       </div>
       <div id="s-products-lines"></div>
       <hr class="s-divider">
@@ -469,14 +480,14 @@
       <button class="btn-print" onclick="printReceipt()">
         <i class="bi bi-printer-fill"></i> Udskriv / gem som PDF
       </button>
-      <div class="print-hint">Vælg "Gem som PDF" i printervalget</div>
+      <div class="print-hint">VÃ¦lg "Gem som PDF" i printervalget</div>
     </div>
   </div>
 
 </div><!-- /wrap -->
 
 
-<!-- ══ PRINT RECEIPT (hidden on screen, only visible on print) ══ -->
+<!-- â•â• PRINT RECEIPT (hidden on screen, only visible on print) â•â• -->
 <div id="receipt">
   <div class="rc-header">
     <div>
@@ -502,7 +513,7 @@
         <th style="width:55%">Beskrivelse</th>
         <th class="right" style="width:15%">Antal</th>
         <th class="right" style="width:15%">Enhedspris</th>
-        <th class="right" style="width:15%">Beløb</th>
+        <th class="right" style="width:15%">BelÃ¸b</th>
       </tr>
     </thead>
     <tbody id="rc-lines"></tbody>
@@ -529,8 +540,8 @@ function roundHalfUp(mins) {
   if (mins <= 0) return 0;
   return Math.ceil(mins / 30) * 0.5;
 }
-function fmt(n)  { return n.toFixed(0) + ' kr'; }
-function fmtH(h) { return String(h).replace('.', ',') + ' t'; }
+function fmt(n)  { return n.toFixed(0) + ' kr'; }
+function fmtH(h) { return String(h).replace('.', ',') + ' t'; }
 function esc(s)  { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function escA(s) { return (s||'').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
 
@@ -583,7 +594,8 @@ function calc() {
   const billedH = roundHalfUp(h*60+m);
   document.getElementById('billed-time').textContent = fmtH(billedH);
 
-  const laborEx = billedH * 600;
+  const rate = parseFloat(document.getElementById('hourly-rate').value) || 0;
+  const laborEx = billedH * rate;
   document.getElementById('s-labor-row').style.display = billedH>0 ? '' : 'none';
   document.getElementById('s-labor').textContent = fmt(laborEx);
   document.getElementById('s-billed-label').textContent = fmtH(billedH);
@@ -591,7 +603,9 @@ function calc() {
   const svc = document.getElementById('service-charge').checked;
   document.getElementById('s-service-row').style.display = svc ? '' : 'none';
   document.getElementById('service-lbl').textContent = svc ? 'Inkluderet' : 'Ikke inkluderet';
-  const serviceEx = svc ? 150 : 0;
+  const svcPrice = parseFloat(document.getElementById('service-price').value) || 0;
+  document.getElementById('s-service-val').textContent = fmt(svcPrice);
+  const serviceEx = svc ? svcPrice : 0;
 
   let prodsEx = 0;
   const pLines = [];
@@ -618,10 +632,12 @@ function saveInfo() {
   localStorage.setItem('fk_phone',    document.getElementById('company-phone').value);
   localStorage.setItem('fk_email',    document.getElementById('company-email').value);
   localStorage.setItem('fk_invoice',  document.getElementById('invoice-no').value);
+  localStorage.setItem('fk_rate',     document.getElementById('hourly-rate').value);
+  localStorage.setItem('fk_svcprice', document.getElementById('service-price').value);
 }
 
 function incrementInvoiceNo(val) {
-  // Find trailing digits and increment them, preserving prefix (e.g. "2026-041" → "2026-042")
+  // Find trailing digits and increment them, preserving prefix (e.g. "2026-041" â†’ "2026-042")
   const match = val.match(/^(.*?)(\d+)$/);
   if (!match) return val;
   const prefix  = match[1];
@@ -642,7 +658,7 @@ function printReceipt() {
   const contactParts = [];
   if (phone) contactParts.push('Tlf. ' + phone);
   if (email) contactParts.push('E-mail: ' + email);
-  document.getElementById('rc-contact').textContent = contactParts.join('  ·  ');
+  document.getElementById('rc-contact').textContent = contactParts.join('  Â·  ');
 
   let meta = 'Dato: ' + dateStr;
   if (invoiceNo) meta += '\nFaktura nr. ' + invoiceNo;
@@ -668,15 +684,15 @@ function printReceipt() {
   const lines = [];
 
   if (billedH > 0) {
-    lines.push({ desc: 'Arbejdstid', qty: fmtH(billedH), unit: '600 kr/t', amount: billedH*600 });
+    lines.push({ desc: 'Arbejdstid', qty: fmtH(billedH), unit: '600 kr/t', amount: billedH*600 });
   }
   if (svc) {
-    lines.push({ desc: 'Servicebil (fast gebyr)', qty: '1', unit: '150 kr', amount: 150 });
+    lines.push({ desc: 'Servicebil (fast gebyr)', qty: '1', unit: '150 kr', amount: 150 });
   }
   products.forEach(p => {
     const ex = p.withVat ? p.price/1.25 : p.price;
     const unitLabel = p.withVat ? '(inkl. moms omregnet)' : '';
-    lines.push({ desc: p.name||'Produkt', qty: '1', unit: ex.toFixed(0)+' kr '+unitLabel, amount: ex });
+    lines.push({ desc: p.name||'Produkt', qty: '1', unit: ex.toFixed(0)+' kr '+unitLabel, amount: ex });
   });
 
   const sub   = lines.reduce((s,l)=>s+l.amount,0);
@@ -688,19 +704,19 @@ function printReceipt() {
       <td>${esc(l.desc)}</td>
       <td class="right">${esc(l.qty)}</td>
       <td class="right">${esc(l.unit)}</td>
-      <td class="right">${l.amount.toFixed(0)} kr</td>
+      <td class="right">${l.amount.toFixed(0)} kr</td>
     </tr>`
   ).join('') || `<tr><td colspan="4" style="color:#94a3b8;font-size:9pt">Ingen poster</td></tr>`;
 
-  document.getElementById('rc-subtotal').textContent = sub.toFixed(0)+' kr';
-  document.getElementById('rc-vat').textContent      = vat.toFixed(0)+' kr';
-  document.getElementById('rc-total').textContent    = total.toFixed(0)+' kr';
+  document.getElementById('rc-subtotal').textContent = sub.toFixed(0)+' kr';
+  document.getElementById('rc-vat').textContent      = vat.toFixed(0)+' kr';
+  document.getElementById('rc-total').textContent    = total.toFixed(0)+' kr';
 
   const footerParts = [];
   if (company) footerParts.push(company);
   if (phone)   footerParts.push('Tlf. ' + phone);
   if (email)   footerParts.push(email);
-  document.getElementById('rc-footer').textContent = footerParts.join('  ·  ');
+  document.getElementById('rc-footer').textContent = footerParts.join('  Â·  ');
 
   window.print();
 
@@ -722,8 +738,12 @@ document.addEventListener('DOMContentLoaded', () => {
   if (ph) document.getElementById('company-phone').value = ph;
   if (em) document.getElementById('company-email').value = em;
   if (iv) document.getElementById('invoice-no').value = iv;
+  const rt = localStorage.getItem('fk_rate'); if (rt) document.getElementById('hourly-rate').value = rt;
+  const sp = localStorage.getItem('fk_svcprice'); if (sp) document.getElementById('service-price').value = sp;
   calc();
 });
 </script>
 </body>
 </html>
+
+
